@@ -1,0 +1,104 @@
+<div align = "center">可持久化trie</div>
+
+前缀和形式01trie记得insert(0)
+
+可持久化：insert(rt[0],rt[0],0)
+
+```c++
+const int N = 100005;
+int n, m, k;
+vector<pair<int, string>> vec[N];
+int f[N], d[N], sz[N], son[N], top[N];
+int rt[N];
+int cnt;
+struct trie
+{
+    int sum;
+    int son[26];
+} c[N * 11];//trie树第一个节点为空节点所以必须+1
+
+void insert(int &node, int last, string &s)//非递归版
+{
+    node = ++cnt;
+    c[node] = c[last], c[node].sum++;
+    int p = node;
+    for (auto x:s)
+    {
+        c[p].son[x - 'a'] = ++cnt;
+        p = c[p].son[x - 'a'];
+        last = c[last].son[x - 'a'];
+        c[p] = c[last];
+        c[p].sum++;
+    }
+}
+
+/*void insert(int &node, int last, int p, string &s)//递归版
+{
+    node = ++cnt, c[node] = c[last], c[node].sum++;
+    if (p == s.length())return;
+    insert(c[node].son[s[p] - 'a'], c[last].son[s[p] - 'a'], p + 1, s);
+}*/
+
+int query(int node, string &s)
+{
+    for (auto x:s)
+        node = c[node].son[x - 'a'];
+    return c[node].sum;
+}
+
+void dfs1(int u, int fa)
+{
+    d[u] = d[fa] + 1, f[u] = fa;
+    sz[u] = 1;
+    for (auto[v, s]:vec[u])
+    {
+        if (v == fa)continue;
+        insert(rt[v], rt[u], s);
+        dfs1(v, u);
+        sz[u] += sz[v];
+        if (sz[son[u]] < sz[v])son[u] = v;
+    }
+}
+
+void dfs2(int u, int topu)
+{
+    top[u] = topu;
+    if (son[u])dfs2(son[u], topu);
+    for (auto[v, s]:vec[u])
+    {
+        if (v == f[u] || v == son[u])
+            continue;
+        dfs2(v, v);
+    }
+}
+
+int lca(int x, int y)
+{
+    while (top[x] != top[y])
+    {
+        if (d[top[x]] < d[top[y]])
+            swap(x, y);
+        x = f[top[x]];
+    }
+    return d[x] < d[y] ? x : y;
+}
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    int p, q, u, v, w, x, y, z, T;
+    cin >> n;
+    string s;
+    for (int i = 1; i < n; i++)
+        cin >> u >> v >> s, vec[u].emplace_back(v, s), vec[v].emplace_back(u, s);
+    dfs1(1, 0);
+    dfs2(1, 1);
+    cin >> q;
+    while (q--)
+    {
+        cin >> x >> y >> s;
+        cout << query(rt[x], s) + query(rt[y], s) - 2 * query(rt[lca(x, y)], s) << '\n';
+    }
+    return 0;
+}
+```

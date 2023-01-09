@@ -1,0 +1,196 @@
+#include <bits/stdc++.h>
+#include <ext/pb_ds/tree_policy.hpp>
+#include <ext/pb_ds/trie_policy.hpp>
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/priority_queue.hpp>
+
+using namespace std;
+using namespace __gnu_pbds;
+using namespace __gnu_cxx;
+typedef long long ll;
+//tree<int, null_type, less<int>, rb_tree_tag, tree_order_statistics_node_update> tr;
+//__gnu_pbds::priority_queue<int, greater<int>, pairing_heap_tag> qu;
+//typedef trie<string, null_type, trie_string_access_traits<>, pat_trie_tag, trie_prefix_search_node_update> pref_trie;
+const int N = 100005;
+int n, m, k;
+int a[N], b[N], d[N], top[N], son[N], f[N], sz[N], nid[N], oid[N], u[N], v[N], w[N];
+ll c[N << 2], add[N << 2], lazy[N << 2];
+int dfn;
+struct point
+{
+    int v, w;
+};
+vector<point> vec[N];
+
+void dfs1(int u, int fa, int w)
+{
+    sz[u] = 1, f[u] = fa;
+    d[u] = d[fa] + 1, son[u] = 0;
+    b[u] = w;
+    for (auto &x:vec[u])
+    {
+        if (x.v == fa)continue;
+        dfs1(x.v, u, x.w);
+        sz[u] += sz[x.v];
+        if (sz[son[u]] < sz[x.v])son[u] = x.v;
+    }
+}
+
+void dfs2(int u, int topu)
+{
+    top[u] = topu;
+    nid[u] = ++dfn;
+    a[dfn] = b[u];
+    oid[dfn] = u;
+    if (son[u])dfs2(son[u], topu);
+    for (auto &x:vec[u])
+    {
+        if (x.v == son[u] || x.v == f[u])continue;
+        dfs2(x.v, x.v);
+    }
+}
+
+inline void pushup(int k)
+{
+    c[k] = max(c[k << 1], c[k << 1 | 1]);
+}
+
+inline void pushdown(int k)
+{
+    if (lazy[k] != -1)
+    {
+        add[k << 1] = add[k << 1 | 1] = 0;
+        c[k << 1] = c[k << 1 | 1] = lazy[k];
+        lazy[k << 1] = lazy[k << 1 | 1] = lazy[k];
+        lazy[k] = -1;
+    }
+    if (add[k])
+    {
+        add[k << 1] += add[k];
+        add[k << 1 | 1] += add[k];
+        c[k << 1] += add[k];
+        c[k << 1 | 1] += add[k];
+        add[k] = 0;
+    }
+}
+
+void build(int l, int r, int k)
+{
+    if (l == r)c[k] = a[l], add[k] = 0, lazy[k] = -1;
+    else
+    {
+        add[k] = 0, lazy[k] = -1;
+        int m = (l + r) >> 1;
+        build(l, m, k << 1);
+        build(m + 1, r, k << 1 | 1);
+        pushup(k);
+    }
+}
+
+void update(int flag, int v, int L, int R, int l, int r, int k)
+{
+    if (L <= l && r <= R)
+    {
+        if (flag == 1)
+        {
+            add[k] = 0;
+            lazy[k] = v;
+            c[k] = v;
+        }
+        else
+        {
+            add[k] += v;
+            c[k] += v;
+        }
+    }
+    else
+    {
+        pushdown(k);
+        int m = (l + r) >> 1;
+        if (L <= m)update(flag, v, L, R, l, m, k << 1);
+        if (R > m)update(flag, v, L, R, m + 1, r, k << 1 | 1);
+        pushup(k);
+    }
+}
+
+ll query(int L, int R, int l, int r, int k)
+{
+    if (L <= l && r <= R)return c[k];
+    ll ans = 0;
+    int m = (l + r) >> 1;
+    pushdown(k);
+    if (L <= m)ans = max(ans, query(L, R, l, m, k << 1));
+    if (R > m)ans = max(ans, query(L, R, m + 1, r, k << 1 | 1));
+    return ans;
+}
+
+void lca(int x, int y, int p, int flag)
+{
+    while (top[x] != top[y])
+    {
+        if (d[top[x]] < d[top[y]])
+            swap(x, y);
+        update(flag, p, nid[top[x]], nid[x], 1, n, 1);
+        x = f[top[x]];
+    }
+    if (x == y)return;
+    if (d[x] > d[y])swap(x, y);
+    update(flag, p, nid[x] + 1, nid[y], 1, n, 1);
+}
+
+ll rmq(int x, int y)
+{
+    ll ans = 0;
+    while (top[x] != top[y])
+    {
+        if (d[top[x]] < d[top[y]])
+            swap(x, y);
+        ans = max(ans, query(nid[top[x]], nid[x], 1, n, 1));
+        x = f[top[x]];
+    }
+    if (x == y)return ans;
+    if (d[x] > d[y])swap(x, y);
+    ans = max(ans, query(nid[x] + 1, nid[y], 1, n, 1));
+    return ans;
+}
+
+int main()
+{
+    int i, j, t, p, q, x, y, z, T;
+    cin >> n;
+    for (i = 1; i < n; i++)
+    {
+        scanf("%d%d%d", &u[i], &v[i], &w[i]);
+        vec[u[i]].push_back({v[i], w[i]}), vec[v[i]].push_back({u[i], w[i]});
+    }
+    d[1] = 0;
+    dfs1(1, 1, 0);
+    dfs2(1, 1);
+    build(1, n, 1);
+    char s[10];
+    while (scanf("%s", s) == 1 && s[0] != 'S')
+    {
+        int w;
+        if (s[1] == 'h')
+        {
+            scanf("%d%d", &k, &w);
+            lca(u[k], v[k], w, 1);
+        }
+        else if (s[1] == 'o')
+        {
+            scanf("%d%d%d", &x, &y, &w);
+            lca(x, y, w, 1);
+        }
+        else if (s[1] == 'd')
+        {
+            scanf("%d%d%d", &x, &y, &w);
+            lca(x, y, w, 2);
+        }
+        else
+        {
+            scanf("%d%d", &x, &y);
+            printf("%lld\n", rmq(x, y));
+        }
+    }
+    return 0;
+}

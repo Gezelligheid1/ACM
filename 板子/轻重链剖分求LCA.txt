@@ -1,0 +1,62 @@
+//轻重链剖分求LCA
+
+const int N = 500005;
+int n, m;
+int a[N], d[N], f[N], son[N], sz[N], top[N], vis[N];
+vector<int> vec[N];
+
+void dfs1(int u, int fa)
+{
+    sz[u] = 1, d[u] = d[fa] + 1;
+    son[u] = 0, f[u] = fa;//重儿子与父节点.
+    for (auto &v:vec[u])
+    {
+        if (v == fa)continue;
+        dfs1(v, u);
+        sz[u] += sz[v];
+        if (sz[son[u]] < sz[v])son[u] = v;
+    }
+}
+
+void dfs2(int u, int topu)
+{
+    top[u] = topu;//u所在的重链的顶端.
+    if (son[u])dfs2(son[u], topu);
+    for (auto &v:vec[u])
+    {
+        if (v != f[u] && v != son[u])
+            dfs2(v, v);
+    }
+}
+
+int lca(int x, int y)
+{
+    while (top[x] != top[y])//不在同一条重链
+    {
+        if (d[top[x]] < d[top[y]])
+            swap(x, y);
+        x = f[top[x]];
+    }
+    return d[x] < d[y] ? x : y;
+}
+
+int main()
+{
+    int i, j, k, t, g, p, q, u, v, w, x, y, T;
+    scanf("%d%d%d", &n, &m, &g);//g为树根.
+    for (i = 1; i < n; i++)
+    {
+        scanf("%d%d", &u, &v);
+        vec[u].push_back(v);
+        vec[v].push_back(u);
+    }
+    d[g] = 0;//多组数据时一定要!!!
+    dfs1(g, g);
+    dfs2(g, g);
+    while (m--)
+    {
+        scanf("%d%d", &x, &y);
+        printf("%d\n", lca(x, y));
+    }
+    return 0;
+}

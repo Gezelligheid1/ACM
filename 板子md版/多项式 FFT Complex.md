@@ -1,0 +1,139 @@
+<div align = "center">多项式 FFT Complex</div>
+
+FFT
+
+```c++
+namespace FFTComplex {
+    const double PI = acos(-1.0);
+
+    struct C
+    {
+        double x, y;
+
+        C(double x = 0, double y = 0) : x(x), y(y) {}
+
+        C operator!() const { return C(x, -y); }//共轭复数
+    };
+
+    inline C operator*(const C &a, const C &b)
+    {
+        return C(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
+    }
+
+    inline C operator+(const C &a, const C &b)
+    {
+        return C(a.x + b.x, a.y + b.y);
+    }
+
+    inline C operator-(const C &a, const C &b)
+    {
+        return C(a.x - b.x, a.y - b.y);
+    }
+
+    constexpr int L(1 << 20);
+    C w[L];
+    int _ = []
+    {
+        for (int i = 0; i < L / 2; i++)w[i + L / 2] = C(cos(2 * PI * i / L), sin(2 * PI * i / L));
+        for (int i = L / 2 - 1; i; i--)w[i] = w[i << 1];
+        return 0;
+    }();
+
+    void dft(C *a, int n)
+    {
+        for (int k = n >> 1; k; k >>= 1)
+            for (int i = 0; i < n; i += k << 1)
+                for (int j = 0; j < k; j++)
+                {
+                    C x = a[i + j], y = a[i + j + k];
+                    a[i + j + k] = (x - y) * w[j + k];
+                    a[i + j] = x + y;
+                }
+    }
+
+    void idft(C *a, int n)
+    {
+        for (int k = 1; k < n; k <<= 1)
+            for (int i = 0; i < n; i += k << 1)
+                for (int j = 0; j < k; j++)
+                {
+                    C &x = a[i + j], y = a[i + j + k] * w[j + k];
+                    a[i + j + k] = x - y, x = x + y;
+                }
+        for (int i = 0; i < n; i++)
+            a[i].x /= n, a[i].y /= n;
+        reverse(a + 1, a + n);
+    }
+}
+namespace polybase {//没有模数
+    using namespace FFTComplex;
+
+    int norm(int n) { return 1 << __lg(n * 2 - 1); }
+
+    struct poly : public vector<ll>
+    {
+        using vector<ll>::vector;
+#define T (*this)
+
+        poly rev() const { return poly(rbegin(), rend()); }
+
+        friend poly operator*(const poly &x, const poly &y)
+        {
+            if (x.empty() || y.empty())return poly();
+            int len = x.size() + y.size() - 1, n = norm(len);
+            vector<C> a(n), b(n);
+            for (int i = 0; i < x.size(); i++)
+                a[i] = C(x[i], 0);
+            for (int i = 0; i < y.size(); i++)
+                b[i] = C(y[i], 0);
+            dft(a.data(), n), dft(b.data(), n);
+            for (int i = 0; i < n; i++)
+                a[i] = a[i] * b[i];
+            idft(a.data(), n);
+            poly c(len);
+            for (int i = 0; i < len; i++)
+                c[i] = a[i].x + 0.5;//如果有负数四舍五入用round/roundl
+            return c;
+        }
+
+        poly operator+(const poly &b)
+        {
+            poly a(T);
+            if (a.size() < b.size())
+                a.resize(b.size());
+            for (int i = 0; i < b.size(); i++)//用b.size()防止越界
+                a[i] += b[i];
+            return a;
+        }
+
+        poly operator-(const poly &b)
+        {
+            poly a(T);
+            if (a.size() < b.size())
+                a.resize(b.size());
+            for (int i = 0; i < b.size(); i++)
+                a[i] -= b[i];
+            return a;
+        }
+
+        poly operator*(const ll p)
+        {
+            poly a(T);
+            for (auto &x:a)
+                x = x * p;
+            return a;
+        }
+
+        poly &operator<<=(int r) { return insert(begin(), r, 0), T; }//注意逗号,F(x)*(x^r)
+
+        poly operator<<(int r) const { return poly(T) <<= r; }
+
+        poly operator>>(int r) const { return r >= size() ? poly() : poly(begin() + r, end()); }
+
+        poly &operator>>=(int r) { return T = T >> r; }//F[x]/(x^r)
+#undef T
+    };
+}
+using namespace polybase;
+```
+

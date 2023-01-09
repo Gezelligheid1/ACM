@@ -1,0 +1,208 @@
+//树链剖分+线段树
+
+//解决子树或两点之间路径 修改和查询问题
+//http://acm.hdu.edu.cn/showproblem.php?pid=3966
+
+const int N = 50005;
+int n, m;
+int a[N], c[N << 2], lazy[N << 2], sz[N], top[N], d[N], f[N], son[N], nid[N], oid[N];//new_id old_id
+vector<int> vec[N];
+int dfn;
+
+void dfs1(int u, int fa)
+{
+    sz[u] = 1, f[u] = fa;
+    son[u] = 0, d[u] = d[fa] + 1;
+    for (auto &v:vec[u])
+    {
+        if (v == fa)continue;
+        dfs1(v, u);
+        sz[u] += sz[v];
+        if (sz[son[u]] < sz[v])son[u] = v;
+    }
+}
+
+void dfs2(int u, int topu)
+{
+    top[u] = topu;
+    nid[u] = ++dfn;//dfs序 注意每次重置为0
+    oid[dfn] = u;
+    if (son[u])dfs2(son[u], topu);
+    for (auto &v:vec[u])
+    {
+        if (v != f[u] && v != son[u])
+        {
+            dfs2(v, v);
+        }
+    }
+}//如果对以u为根的子树操作，对应区间[nid[u],nid[u]+sz[u]-1].
+inline void pushup(int k)
+{
+    c[k] = c[k << 1] + c[k << 1 | 1];
+}
+
+inline void pushdown(int l, int r, int k)
+{
+    if (lazy[k])
+    {
+        int m = (l + r) >> 1;
+        lazy[k << 1] += lazy[k];
+        lazy[k << 1 | 1] += lazy[k];
+        c[k << 1] += (m - l + 1) * lazy[k];
+        c[k << 1 | 1] += (r - m) * lazy[k];
+        lazy[k] = 0;
+    }
+}
+
+void build(int l, int r, int k)
+{
+    if (l == r)c[k] = a[oid[l]], lazy[k] = 0;
+    else
+    {
+        lazy[k] = 0;
+        int m = (l + r) >> 1;
+        build(l, m, k << 1);
+        build(m + 1, r, k << 1 | 1);
+        pushup(k);
+    }
+}
+
+void update(int v, int L, int R, int l, int r, int k)
+{
+    if (L <= l && r <= R)
+    {
+        c[k] += (r - l + 1) * v;
+        lazy[k] += v;
+        return;
+    }
+    int m = (l + r) >> 1;
+    pushdown(l, r, k);
+    if (L <= m)update(v, L, R, l, m, k << 1);
+    if (R > m)update(v, L, R, m + 1, r, k << 1 | 1);
+    pushup(k);
+}
+
+int query(int L, int R, int l, int r, int k)
+{
+    if (L <= l && r <= R)
+    {
+        return c[k];
+    }
+    int ans = 0;
+    pushdown(l, r, k);
+    int m = (l + r) >> 1;
+    if (L <= m)ans += query(L, R, l, m, k << 1);
+    if (R > m)ans += query(L, R, m + 1, r, k << 1 | 1);
+    return ans;
+}
+
+void lca(int x, int y, int p)
+{
+    //cout << top[x] << " " << top[y] << endl;
+    while (top[x] != top[y])
+    {
+        if (d[top[x]] < d[top[y]])
+            swap(x, y);
+        //cout << nid[top[x]] << " " << nid[x] << endl;
+        update(p, nid[top[x]], nid[x], 1, n, 1);
+        x = f[top[x]];
+    }
+    if (d[x] > d[y])swap(x, y);
+    //cout << nid[x] << " " << nid[y] << endl;
+    update(p, nid[x], nid[y], 1, n, 1);
+}
+
+
+int main()
+{
+    int i, j, k, t, g, p, q, u, v, w, x, y, T;
+    while (cin >> n >> m >> q)
+    {
+        for (i = 1; i <= n; i++)
+            scanf("%d", &a[i]), vec[i].clear();
+        while (m--)
+        {
+            scanf("%d%d", &u, &v);
+            vec[u].push_back(v);
+            vec[v].push_back(u);
+        }
+        dfn = 0;
+        d[1] = 0;
+        dfs1(1, 1);
+        dfs2(1, 1);
+        build(1, n, 1);
+        char s[2];
+        while (q--)
+        {
+            scanf("%s", s);
+            if (s[0] == 'Q')
+            {
+                scanf("%d", &x);
+                //cout << x << " " << nid[x] << " " << nid[x] + sz[x] - 1 << endl;
+                printf("%d\n", query(nid[x], nid[x], 1, n, 1));
+            }
+            else
+            {
+                scanf("%d%d%d", &x, &y, &p);
+                if (s[0] == 'I')lca(x, y, p);
+                else lca(x, y, -p);
+            }
+        }
+    }
+    return 0;
+}
+
+
+/*
+我们的主角是《指环王》中英俊的人类王子阿拉贡。一天，阿拉贡发现许多敌人想要入侵他的王国。阿拉贡知道，敌人在他的王国外有N个营地，M条边线将它们连接起来。可以保证的是，对于任何两个阵营，都有且只有一条路径连接它们。一开始，阿拉贡知道每个营地的敌人人数。但敌人诡计多端，营中兵丁或增或减。每次敌人改变士兵的数量，他们会设置两个营地C1和C2。然后，对于C1, C2以及从C1到C2的路径上的所有营地，他们将增加或减少K兵到这些营地。现在阿拉贡想要实时知道某些特定营地的士兵人数。
+
+输入
+
+多个测试用例，流程到输入结束。
+
+对于每种情况，第一行包含三个整数N, M, P，这意味着将有N(1≤N≤50000)个阵营，M(M = N-1)条边和P(1≤P≤100000)个操作。营地的数量从1开始。
+
+下一行包含N个整数A1, A2，…AN(0≤Ai≤1000)，表示首先在营地i有Ai敌人。
+
+接下来的M行分别包含两个整数u和v，表示有一条边连接camp-u和camp-v。
+
+接下来的P行将以大写字母“I”、“D”或“Q”开头。
+
+“I”后接3个整数C1、C2、K(0≤K≤1000)，表示C1、C2营地和C1到C2路径上的所有营地增加K个士兵到这些营地。
+
+'D'后接3个整数C1、C2、K(0≤K≤1000)，表示C1、C2营地以及C1到C2路径上的所有营地，减少到这些营地的人数为K。
+
+“Q”后面跟着一个整数C，这是一个查询，意思是阿拉贡想知道当时C营的敌人人数。
+
+输出
+
+对于每个查询，你需要输出指定营地中敌人的实际数量。
+
+样例输入
+
+3 2 5
+
+1 2 3
+
+2 1
+
+2 3
+
+I 1 3 5
+
+Q 2
+
+D 1 2 2
+
+Q 1
+
+Q 3
+
+样例输出
+
+7
+
+4
+
+8
+*/

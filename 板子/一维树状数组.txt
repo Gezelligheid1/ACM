@@ -1,0 +1,27 @@
+//一维树状数组
+
+//需要memset，数组a可以不需要
+int a[200005], c[200005];
+int n;
+inline int lowbit(int x)
+{
+    return x & (-x);
+}
+void update(int i, int k)//第i个数加上k
+{
+    while (i <= n)
+    {
+        c[i] += k;
+        i += lowbit(i);
+    }
+}
+int getsum(int i)//求元素下标1-i的和
+{
+    int result = 0;
+    while (i)
+    {
+        result += c[i];
+        i -= lowbit(i);
+    }
+    return result;
+}

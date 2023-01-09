@@ -1,0 +1,93 @@
+<div align = "center">矩阵快速幂max版</div>
+
+$$
+dp[i][c[p][j]]=max(dp[i-1][p]+val[c[p][j]])
+$$
+
+$a[i][j]表示点i到点j的贡献$
+
+```c++
+const int N = 205;
+int n, m, k;
+int c[N][26], fail[N];
+ll val[N];
+int cnt;
+
+void insert(string &s, int v)
+{
+    int p = 0;
+    for (auto x:s)
+    {
+        if (!c[p][x - 'a'])c[p][x - 'a'] = ++cnt;
+        p = c[p][x - 'a'];
+    }
+    val[p] += v;
+}
+
+void get_fail()
+{
+    queue<int> qu;
+    for (int i = 0; i < 26; i++)
+        if (c[0][i])qu.push(c[0][i]);
+    while (!qu.empty())
+    {
+        int p = qu.front();
+        qu.pop();
+        for (int i = 0; i < 26; i++)
+            if (c[p][i])fail[c[p][i]] = c[fail[p]][i], qu.push(c[p][i]);
+            else c[p][i] = c[fail[p]][i];
+        val[p] += val[fail[p]];
+    }
+}
+
+struct matrix//注意n
+{
+    ll a[201][201];//高版本采用
+
+    matrix() { memset(a, 240, sizeof(a)); }
+
+    friend matrix operator*(const matrix &u, const matrix &v)
+    {
+        matrix ans;
+        for (int i = 0; i <= n; i++)
+            for (int j = 0; j <= n; j++)
+                for (int k = 0; k <= n; k++)
+                    ans.a[i][k] = max(ans.a[i][k], u.a[i][j] + v.a[j][k]);
+        return ans;
+    }
+
+    matrix fpow(ll r)
+    {
+        matrix x = *this;
+        matrix result = x;//max版fpow注意答案初始为*this
+        while (r)
+        {
+            if (r & 1)result = result * x;
+            r >>= 1;
+            x = x * x;
+        }
+        return result;
+    }
+};
+
+int main()
+{
+    int p, q, u, v, w, x, y, z, T;
+    cin >> x >> m;
+    string s;
+    for (int i = 1; i <= m; i++)
+        cin >> s >> v, insert(s, v);
+    n = cnt;
+    get_fail();
+    matrix a;
+    for (int i = 0; i <= cnt; i++)
+        for (int j = 0; j < 26; j++)
+            a.a[i][c[i][j]] = val[c[i][j]];
+    a = a.fpow(x - 1);
+    ll ans = -1e18;
+    for (int j = 0; j <= cnt; j++)
+        ans = max(ans, a.a[0][j]);
+    cout << ans;
+    return 0;
+}
+```

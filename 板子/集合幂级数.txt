@@ -1,0 +1,94 @@
+namespace polybase {//注意是int，conv的n是指数，别忘记清空c，封装的函数都带拷贝，一次性的可以手动写
+    constexpr int mod = 1e9 + 7, L = 18;//注意模数和L大小
+    static int a[L + 1][1 << L], b[L + 1][1 << L];//复制数组，用不到可以省略
+    ll inv[L + 1];
+
+    ll fpow(ll x, ll r)
+    {
+        ll result = 1;
+        while (r)
+        {
+            if (r & 1)result = result * x % mod;
+            r >>= 1;
+            x = x * x % mod;
+        }
+        return result;
+    }
+
+    int popcnt[1 << L], _ = []
+    {
+        for (int i = 1; i <= L; i++)
+            inv[i] = fpow(i, mod - 2);
+        for (int i = 1; i < 1 << L; i++)
+            popcnt[i] = popcnt[i >> 1] + (i & 1);
+        return 0;
+    }();
+
+    void fwt(int *f, const int n)
+    {
+        for (int o = 2, k = 1; o <= n; o <<= 1, k <<= 1)
+            for (int i = 0; i < n; i += o)
+                for (int j = 0; j < k; j++)
+                {
+                    f[i + j + k] += f[i + j];
+                    if (f[i + j + k] >= mod)
+                        f[i + j + k] -= mod;
+                }
+    }
+
+    void ifwt(int *f, const int n)
+    {
+        for (int o = 2, k = 1; o <= n; o <<= 1, k <<= 1)
+            for (int i = 0; i < n; i += o)
+                for (int j = 0; j < k; j++)
+                {
+                    f[i + j + k] -= f[i + j];
+                    if (f[i + j + k] < 0)
+                        f[i + j + k] += mod;
+                }
+    }
+
+    void conv(int A[][1 << L], int B[][1 << L], int c[][1 << L], int n)//子集卷积，n为指数，别忘记清空c数组
+    {
+        for (int i = 0; i <= n; i++)
+            for (int j = 0; j < 1 << n; j++)
+                a[i][j] = A[i][j], b[i][j] = B[i][j];
+
+        for (int i = 0; i <= n; i++)//注意取等
+            fwt(a[i], 1 << n), fwt(b[i], 1 << n);
+
+        for (int i = 0; i <= n; i++)
+            for (int j = 0; i + j <= n; j++)
+                for (int k = 0; k < 1 << n; k++)
+                    c[i + j][k] = (c[i + j][k] + 1ll * a[i][k] * b[j][k]) % mod;
+
+        for (int i = 0; i <= n; i++)//注意取等
+            ifwt(c[i], 1 << n);
+    }
+
+    void exp(int A[][1 << L], int b[][1 << L], int n)//B(x)=e^A(x)，n为指数
+    {
+        for (int i = 0; i <= n; i++)
+            for (int j = 0; j < 1 << n; j++)
+                a[i][j] = A[i][j];
+
+        for (int i = 0; i <= n; i++)
+            fwt(a[i], 1 << n);
+
+        for (int k = 0; k < 1 << n; k++)
+        {
+            b[0][k] = 1;
+            for (int i = 1; i <= n; i++)
+            {
+                int sum = 0;
+                for (int j = 1; j <= i; j++)
+                    sum = (sum + (ll) j * a[j][k] % mod * b[i - j][k]) % mod;
+                b[i][k] = sum * inv[i] % mod;//inv是long long类型
+            }
+        }
+
+        for (int i = 0; i <= n; i++)
+            ifwt(b[i], 1 << n);
+    }
+}
+using namespace polybase;

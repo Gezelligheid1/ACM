@@ -1,0 +1,53 @@
+const int N = 50005;
+int n, m, k;
+int a[N];
+int mu[N], prime[N], vis[N];
+int cnt;
+
+void Prime()
+{
+    mu[1] = 1;
+    for (int i = 2; i <= N - 5; i++)
+    {
+        if (!vis[i])prime[++cnt] = i, vis[i] = i, mu[i] = -1;
+        for (int j = 1; j <= cnt && i * prime[j] <= N - 5; j++)
+        {
+            vis[i * prime[j]] = prime[j];
+            if (i % prime[j] == 0)
+            {
+                mu[i * prime[j]] = 0;
+                break;
+            }
+            mu[i * prime[j]] = -mu[i];
+        }
+    }
+    for (int i = 1; i <= N - 5; i++)
+        mu[i] += mu[i - 1];
+}
+
+ll solve(int n, int m)
+{
+    int p = min(n, m);
+    ll ans = 0;
+    for (int l = 1, r; l <= p; l = r + 1)
+    {
+        r = min(n / (n / l), m / (m / l));
+        ans += (ll) (mu[r] - mu[l - 1]) * (n / l) * (m / l);
+    }
+    return ans;
+}
+
+int main()
+{
+    int i, j, p, q, u, v, w, x, y, z, T;
+    Prime();
+    cin >> T;
+    while (T--)
+    {
+        int a, b, c, d, k;
+        scanf("%d%d%d%d%d", &a, &b, &c, &d, &k);
+        printf("%lld\n", solve(b / k, d / k) - solve((a - 1) / k, d / k) - solve(b / k, (c - 1) / k) +
+                         solve((a - 1) / k, (c - 1) / k));
+    }
+    return 0;
+}

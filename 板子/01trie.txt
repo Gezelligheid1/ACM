@@ -1,0 +1,56 @@
+const int N = 500005;
+int n, m, k;
+int a[N];
+int c[N * 32][2], sz[N * 32];
+int cnt;
+
+void insert(ll x)
+{
+    int p = 0;
+    for (int i = 31; i >= 0; i--)
+    {
+        int t = x >> i & 1;
+        if (!c[p][t])c[p][t] = ++cnt;
+        p = c[p][t];
+        sz[p]++;
+    }
+}
+
+ll query(ll x, int k)
+{
+    int p = 0;
+    ll ans = 0;
+    for (int i = 31; i >= 0; i--)
+    {
+        int t = x >> i & 1;
+        if (sz[c[p][!t]] >= k)
+            p = c[p][!t], ans |= 1ll << i;
+        else k -= sz[c[p][!t]], p = c[p][t];
+    }
+    return ans;
+}
+
+ll sum[N];
+
+int main()
+{
+    ll p, q, u, v, w, x, y, z, T;
+    cin >> n >> k;
+    insert(0);//求前缀和0不要忘了！！！
+    for (int i = 1; i <= n; i++)
+        scanf("%lld", &x), sum[i] = sum[i - 1] ^ x, insert(sum[i]);
+    std::priority_queue<tuple<ll, int, int>> qu;
+    for (int i = 0; i <= n; i++)//求前缀和0不要忘了！！！
+        qu.push({query(sum[i], 1), 1, i});
+    ll ans = 0;//这题由于求前k大所以不需要在查询某个sum[i]时先在trie树删除sum[i]再插入sum[i]
+    for (int i = 1; i <= 2 * k; i++)
+    {
+        auto[x, rk, id] = qu.top();
+        qu.pop();
+        ans += x;
+        if (rk < n)
+            qu.push({query(sum[id], rk + 1), rk + 1, id});
+    }
+    cout << ans / 2;
+    return 0;
+}

@@ -1,0 +1,155 @@
+```c++
+#include <iostream>
+#include <cstdio>
+#include <cmath>
+#include <cstring>
+#include <string>
+#include <algorithm>
+#include <vector>
+#include <queue>
+#include <map>
+#include <set>
+#include <stack>
+using namespace std;
+typedef long long ll;
+const int N = 100005;
+ll a[N];
+int limit, l, r[N << 2];
+ll w1[N << 2], w2[N << 2], w[3][N << 2];
+ll ans[N << 2], res[N << 2];
+const ll mod[3] = { 469762049 , 998244353 , 1004535809 };
+const int P = 1000000007;
+ll fpow(ll x, ll r, const int mod)
+{
+    ll result = 1;
+    while (r)
+    {
+        if (r & 1)result = result * x % mod;
+        r >>= 1;
+        x = x * x % mod;
+    }
+    return result;
+}
+ll fand(ll x, ll r, const ll mod)
+{
+    ll result = 0;
+    while (r)
+    {
+        if (r & 1)result = (result + x) % mod;
+        r >>= 1;
+        x = (x << 1) % mod;
+    }
+    return result;
+}
+ll _wn[25];
+void NTT(ll* A, int type, const int P) {
+    int i, j = limit >> 1, k, l, c = 0;
+    ll u, v, w, wn;
+    for (i = 1; i < limit - 1; i++) {
+        if (i < j)swap(A[i], A[j]);
+        for (k = limit >> 1; (j ^= k) < k; k >>= 1);
+    }
+    for (i = 0; i <= 21; i++)_wn[i] = fpow(3, (P - 1) >> i, P);
+    for (l = 2; l <= limit; l <<= 1) {
+        i = l >> 1, wn = _wn[++c];
+        for (j = 0; j < limit; j += l) {
+            w = 1;
+            for (k = j; k < j + i; k++) {
+                u = A[k], v = A[k + i] * w % P;
+                A[k] = (u + v) % P, A[k + i] = (u - v + P) % P;
+                w = (ll)w * wn % P;
+            }
+        }
+    }
+    if (type == -1) {
+        ll inv = fpow(limit, P - 2, P);
+        for (i = 0; i < limit; i++)A[i] = A[i] * inv % P;
+        for (i = 1; i < limit / 2; i++)swap(A[i], A[limit - i]);
+    }
+}
+void merge(int n)
+{
+    ll M = (ll)mod[0] * mod[1];//一定要强制转换
+    ll inv[3] = { fpow(mod[1] % mod[0],mod[0] - 2,mod[0]),fpow(mod[0] % mod[1],mod[1] - 2,mod[1]),fpow(M % mod[2],mod[2] - 2,mod[2]) };
+    for (int i = 0; i <= n; i++)
+    {
+        ll d = (fand(w[0][i] * mod[1] % M, inv[0], M) + fand(w[1][i] * mod[0] % M, inv[1], M)) % M;
+        ll k = (w[2][i] % mod[2] - d % mod[2] + mod[2]) % mod[2] * (inv[2] % mod[2]) % mod[2];
+        ans[i] = (M % P * (k % P) % P + d % P) % P;
+    }
+    //cout << ans[0] << endl;
+}
+void work(ll* a, ll* b, int n, int m)
+{
+    int i, k;
+    memset(w, 0, sizeof(w));
+    for (k = 0; k < 3; k++)
+    {
+        memset(w1, 0, sizeof(w1));
+        memset(w2, 0, sizeof(w2));
+        for (i = 0; i <= n; i++)
+            w1[i] = (a[i] % P + P) % P % mod[k];
+        for (i = 0; i <= m; i++)
+            w2[i] = (b[i] % P + P) % P % mod[k];
+        NTT(w1, 1, mod[k]);
+        NTT(w2, 1, mod[k]);
+        for (i = 0; i < limit; i++)
+            w[k][i] = w1[i] * w2[i] % mod[k];
+        NTT(w[k], -1, mod[k]);
+    }
+    merge(n);
+}
+int cnt[5];
+ll ifac[15005];
+ll fac[15005];
+int main()
+{
+    int i, j, k, n, m, t, p, q, w, y;
+    int kase = 0;
+    fac[0] = 1;
+    for (i = 1; i <= 15000; i++)
+        fac[i] = fac[i - 1] * i % P;
+    ifac[15000] = fpow(fac[15000], P - 2, P);
+    for (i = 15000; i; i--)
+        ifac[i - 1] = ifac[i] * i % P;
+    cin >> t;
+    while (t--)
+    {
+        scanf("%d", &n);
+        memset(a, 0, sizeof(a));
+        scanf("%d", &cnt[0]);
+        cnt[0] = min(cnt[0], n);
+        scanf("%d", &cnt[1]);
+        cnt[1] = min(cnt[1], n);
+        memset(res, 0, sizeof(res));
+        for (i = 0; i <= cnt[1]; i++)
+            res[i] = ifac[i];
+        limit = 1;
+        while (limit <= n*2)limit <<= 1;
+        for (i = 2; i < 5; i++)
+        {
+            scanf("%d", &cnt[i]);
+            memset(a, 0, sizeof(a));
+            cnt[i] = min(cnt[i], n);
+            for (j = 0; j <= cnt[i]; j++)
+                a[j] = ifac[j];
+            work(res, a, n, n);
+            for (j = 0; j <= n; j++)
+                res[j] = ans[j];
+            for (j = n + 1; j < limit; j++)
+                res[j] = 0;
+        }
+        memset(a, 0, sizeof(a));
+        for (i = 0; i <= cnt[0]; i++)
+            a[i] = ifac[i];
+        work(res, a, n, n);
+        ll result = ans[n] * fac[n] % P;
+        a[cnt[0]] = 0;
+        work(res, a, n, n);
+        ll tmp = ans[n - 1] * fac[n - 1] % P;
+        printf("Case #%d: %lld\n", ++kase, (result - tmp + P) % P);
+    }
+    return 0;
+}
+```
+

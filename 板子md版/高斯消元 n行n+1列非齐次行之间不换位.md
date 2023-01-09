@@ -1,0 +1,34 @@
+<div align = "center">高斯消元 n行n+1列非齐次行之间不换位</div>
+
+```c++
+/行之间不换位，所以可以直接根据下标找所需的x的位置
+可根据需要把n+1列改成m列
+void gauss(int n,double a[][230])
+{
+    int i, j, k, r;
+    for (i = 1; i <= n; ++i)
+    {
+        //数据稳定性优化
+        r = i;
+        for (j = i + 1; j <= n; ++j) if (fabs(a[j][i]) > fabs(a[r][i])) r = j;
+        if (fabs(a[r][i]) < eps) continue;
+        if (r != i)
+        {
+            swap(a[r], a[i]);
+        }
+        //消元
+        for (j = n+1; j >= i; j--)
+            for (k = i + 1; k <= n; ++k)
+                if (j == n+1) a[k][n+1] -= a[k][i] / a[i][i] * a[i][n+1];
+                else a[k][j] -= a[k][i] / a[i][i] * a[i][j];
+    }
+    //回代
+    for (i = n; i >= 1; --i)
+    {
+        if (fabs(a[i][i]) < eps) continue;
+        for (j = i + 1; j <= n; ++j)a[i][n+1] -= a[i][j] * a[j][n+1];
+        a[i][n+1] /= a[i][i];
+    }
+}
+```
+

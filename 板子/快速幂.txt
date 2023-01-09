@@ -1,0 +1,13 @@
+//快速幂
+
+ll fpow(ll x, ll r)
+{
+    ll result = 1;
+    while (r)
+    {
+        if (r & 1)result = result * x % mod;
+        r >>= 1;
+        x = x * x % mod;
+    }
+    return result;
+}

@@ -1,0 +1,90 @@
+#include <bits/stdc++.h>
+#include <ext/pb_ds/tree_policy.hpp>
+#include <ext/pb_ds/trie_policy.hpp>
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/priority_queue.hpp>
+
+using namespace std;
+using namespace __gnu_pbds;
+using namespace __gnu_cxx;
+typedef long long ll;
+//tree<int, null_type, less<int>, rb_tree_tag, tree_order_statistics_node_update> tr;
+//__gnu_pbds::priority_queue<int, greater<int>, pairing_heap_tag> qu;
+//typedef trie<string, null_type, trie_string_access_traits<>, pat_trie_tag, trie_prefix_search_node_update> pref_trie;
+const int N = 100005;
+int n, m, k;
+ll f[N], fac[N], ifac[N];
+const ll mod = 1e9 + 7;
+
+ll fpow(ll x, ll r)
+{
+    ll ans = 1;
+    while (r)
+    {
+        if (r & 1)ans = ans * x % mod;
+        r >>= 1;
+        x = x * x % mod;
+    }
+    return ans;
+}
+
+ll pre[N], suf[N];
+
+ll lagrange(ll *f, int n, ll x)//x可能大于mod所以不能用fpow(x-i,mod-2)
+{
+    if (x <= n)return f[x];
+    ll ans = 0;
+    pre[0] = x % mod;
+    for (int i = 1; i <= n; i++)
+        pre[i] = pre[i - 1] * ((x - i) % mod) % mod;
+    suf[n + 1] = 1;
+    for (int i = n; i; i--)
+        suf[i] = suf[i + 1] * ((x - i) % mod) % mod;
+    ans = ifac[n] * suf[1] % mod * f[0] % mod;//i==0
+    if (n & 1)ans = (-ans + mod) % mod;
+    for (int i = 1; i <= n; i++)
+    {
+        ll res = ifac[i] * ifac[n - i] % mod * pre[i - 1] % mod * suf[i + 1] % mod * f[i] % mod;
+        if ((n - i) & 1)res = -res;
+        if (res < 0)res += mod;
+        ans += res;
+        if (ans >= mod)ans -= mod;
+    }
+    return ans;
+}
+
+int t;
+
+inline ll solve(int i)
+{
+    ll p = 2 * i;
+    return (fpow(p, t + 1) - p + mod) % mod * fpow(p - 1, mod - 2) % mod;
+}
+
+inline ll calc(ll x)
+{
+    ll ans;
+    ll p = x % 4;
+    ans = (x / 4 + (p >= 2)) % mod;
+    ans = (ans + (x / 4 + (p >= 1)) % mod * t % mod) % mod;
+    ans = (ans + (x / 4 + (p == 3)) % mod * (t / 2) % mod) % mod;
+    return ans;
+}
+
+int main()
+{
+    int i, j, p, q, u, v, w, z, T;
+    fac[0] = 1;
+    for (i = 1; i <= 100003; i++)
+        fac[i] = fac[i - 1] * i % mod;
+    ifac[100003] = fpow(fac[100003], mod - 2);
+    for (i = 100003; i; i--)
+        ifac[i - 1] = ifac[i] * i % mod;
+    ll x, y;
+    cin >> t >> x >> y;
+    for (i = 1; i <= t + 1; i++)
+        f[i] = (f[i - 1] + solve(i)) % mod;
+    ll ans = (lagrange(f, t + 1, y / 2) - lagrange(f, t + 1, (x - 1) / 2) + mod) % mod;
+    cout << (ans + calc(y) - calc(x - 1) + mod) % mod;
+    return 0;
+}

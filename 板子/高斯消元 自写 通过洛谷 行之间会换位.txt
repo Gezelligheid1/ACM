@@ -1,0 +1,72 @@
+//高斯消元 自写 通过洛谷 行之间会换位
+
+行之间会换位所以需要再写个循环判断需要的x位置在哪
+也可以写一个循环判断是否无解和无穷解
+void gauss(int n, int m, double a[][230])//n行m列
+{
+    int i, j, k;
+    int p = 1;
+    /*for (i = 1; i <= n; i++)
+    {
+        for (j = 1; j <= m; j++)
+            printf("%3.0lf", a[i][j]);
+        cout << endl;
+    }
+    cout << endl << endl << endl;*/
+    for (i = 1; i <= n; i++)
+    {
+        if (fabs(a[i][p]) <= 1e-18)
+        {
+            bool flag = false;
+            for (j = i + 1; j <= n; j++)
+                if (fabs(a[j][p]) > 1e-18)
+                {
+                    flag = true;
+                    swap(a[i], a[j]);
+                    break;
+                }
+            if (!flag)
+            {
+                if (p > m)break;
+                p++;
+                i--;
+                continue;
+            }
+        }
+        if (p <= m)
+        {
+            for (j = p + 1; j <= m; j++)
+                a[i][j] /= a[i][p];
+            a[i][p] = 1.0;
+            for (j = i + 1; j <= n; j++)//下一行
+            {
+                if (fabs(a[j][p]) <= 1e-18)continue;
+                double s = a[j][p];
+                for (k = p; k <= m; k++)
+                    a[j][k] -= s * a[i][k];
+            }
+        }
+    }
+    p = 1;
+    for (i = 1; i < n; i++)//化为标准型
+    {
+        for (j = p; j <= m; j++)
+        {
+            if (fabs(a[i + 1][j]) <= 1e-18)p++;
+            else break;
+        }
+        if (p <= m)
+        for (k = i; k; k--)
+        {
+            double s = a[k][p];
+            for (j = p; j <= m; j++)
+                a[k][j] -= s * a[i + 1][j];
+        }
+    }
+    /*for (i = 1; i <= n; i++)
+    {
+        for (j = 1; j <= m; j++)
+            printf("%3.6lf", a[i][j]);
+        cout << endl;
+    }*/
+}

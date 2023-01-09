@@ -1,0 +1,38 @@
+<div align = "center">Dijkstra</div>
+
+```c++
+int d[1005];
+int inf = 1000000000;
+int vis[1005];
+int w[1005][1005];
+int main()
+{
+    int i, j, k, n, m, t, g, p, q, u, v, x, y, s;
+    int cnt = 0;
+    while (cin >> n >> t && (n || t))
+    {
+        memset(vis, 0, sizeof(vis));
+        for (i = 1; i <= n; i++)
+            for (j = 1; j <= n; j++)
+                w[i][j] = inf;
+        for (i = 0; i < t; i++)
+        {
+            scanf("%d%d%d", &u, &v, &k);
+            w[u][v] = w[v][u]= min(w[u][v], k);//可检测两个点有多条路的情况
+        }
+        for (i = 1; i <= n; i++)
+            d[i] = i == 1 ? 0 : inf;
+        for (i = 1; i <= n; i++)
+        {
+            m = inf;
+            for (y = 1; y <= n; y++)
+                if (!vis[y] && d[y] <= m)m = d[x = y];
+            vis[x] = 1;
+            for (y = 1; y <= n; y++)
+                d[y] = min(d[y], d[x] + w[x][y]);
+        }
+        printf("%d\n", d[n]);
+    }
+    return 0;
+}
+```

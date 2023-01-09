@@ -1,0 +1,115 @@
+//FFT
+
+const double pi = acos(-1);
+
+struct Complex
+{
+    double x = 0, y = 0;
+
+    Complex(double xx = 0, double yy = 0) { x = xx, y = yy; }//c++11必须写
+    friend Complex operator+(const Complex &a, const Complex &b) { return Complex{a.x + b.x, a.y + b.y}; }
+
+    friend Complex operator-(const Complex &a, const Complex &b) { return Complex{a.x - b.x, a.y - b.y}; }
+
+    friend Complex operator*(const Complex &a, const Complex &b)
+    {
+        return Complex{a.x * b.x - a.y * b.y, a.y * b.x + a.x * b.y};
+    }
+};
+namespace polybase {//可以用long double提高精度
+    int l, limit;
+    vector<int> r;
+
+    inline int norm(int n) { return 1 << __lg(n * 2 - 1); }
+
+    void fft(Complex *a, int type)
+    {
+        for (int i = 0; i < limit; i++)
+            if (i < r[i])swap(a[i], a[r[i]]);//求出要迭代的序列
+        for (int mid = 1; mid < limit; mid <<= 1)//待合并区间limit的一半
+        {
+            Complex wn{cos(pi / mid), type * sin(pi / mid)};
+            for (int R = mid << 1, j = 0; j < limit; j += R)//R是区间的长度，j表示前已经到哪个位置了
+            {
+                Complex w{1, 0};
+                for (int k = 0; k < mid; k++, w = w * wn)//枚举左半部分
+                {
+                    Complex x = a[j + k], y = w * a[j + mid + k];
+                    a[j + k] = x + y;
+                    a[j + mid + k] = x - y;
+                }
+            }
+        }
+        if (type == -1)
+            for (int i = 0; i < limit; i++)
+                a[i].x /= limit, a[i].y /= limit;
+    }
+
+    struct poly : public vector<Complex>
+    {
+        using vector<Complex>::vector;
+#define T (*this)
+
+        friend void fft(poly &a, const int type) { fft(a.data(), type); }
+
+        poly operator*(int b)
+        {
+            poly a(T);
+            for (auto &[x, y]:a)
+                x *= b, y *= b;
+            return a;
+        }
+
+        friend poly operator*(const poly &x, const poly &y)
+        {
+            if (x.empty() || y.empty())return poly();
+            poly a(x), b(y);
+            int len = a.size() + b.size() - 1;
+            limit = norm(len);
+            l = __lg(limit);
+            r.resize(limit);
+            for (int i = 0; i < limit; i++)//多项式从低到高系数a[0]-a[limit-1]
+                r[i] = (r[i >> 1] >> 1) | ((i & 1) << (l - 1));
+            a.resize(limit), b.resize(limit);
+            fft(a, 1);
+            fft(b, 1);
+            for (int i = 0; i < limit; i++)
+                a[i] = a[i] * b[i];
+            fft(a, -1);
+            a.resize(len);
+            return a;
+        }
+
+        poly operator+(const poly &b)
+        {
+            poly a(T);
+            if (a.size() < b.size())
+                a.resize(b.size());
+            for (int i = 0; i < b.size(); i++)//用b.size()防止越界
+                a[i] = a[i] + b[i];
+            return a;
+        }
+
+        poly operator-(const poly &b)
+        {
+            poly a(T);
+            if (a.size() < b.size())
+                a.resize(b.size());
+            for (int i = 0; i < b.size(); i++)
+                a[i] = a[i] - b[i];
+            return a;
+        }
+
+        poly mul(int b)
+        {
+            poly ans(size() * b);
+            for (int i = 0; i < size(); i++)
+                ans[i * b] = T[i];
+            return ans;
+        }
+
+#undef T
+    };
+}
+using namespace polybase;
+

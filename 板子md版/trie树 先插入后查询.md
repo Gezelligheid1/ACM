@@ -1,0 +1,33 @@
+```c++
+string s;
+int tot = 0;
+struct point {
+    int t;//统计以该单词为前缀和的单词个数(包括自己)
+    int a[26];
+}trie[400005];
+void insert(string s)
+{
+    int i, p = 0;
+    int len = s.length();
+    for (i = 0; i < len; i++)
+    {
+        if (!trie[p].a[s[i] - 'a']) {
+            trie[p].a[s[i] - 'a'] = ++tot;//点的编号
+        }
+        p = trie[p].a[s[i] - 'a'];
+        trie[p].t++;
+    }
+}
+int query(string s)//查询以s为前缀和的单词个数(包括自己)
+{
+    int i, p = 0;
+    int len = s.length();
+    for (i = 0; i < len; i++)
+    {
+        if (!trie[p].a[s[i] - 'a'])return 0;
+        p = trie[p].a[s[i] - 'a'];
+    }
+    return trie[p].t;
+}
+```
+

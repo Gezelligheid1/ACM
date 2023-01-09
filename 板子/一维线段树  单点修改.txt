@@ -1,0 +1,42 @@
+//一维线段树  单点修改
+
+const int maxn = 200005;
+int a[maxn], c[maxn << 2];
+void pushup(int k)//更新函数，这里是实现最大值 ，同理可以变成，最小值，区间和等
+{
+    c[k] = c[k << 1] + c[k << 1 | 1];
+}
+void build(int l, int r, int k)
+{
+    if (l == r)c[k] = a[l];
+    else
+    {
+        int m = l + ((r - l) >> 1);
+        build(l, m, k << 1);
+        build(m + 1, r, k << 1 | 1);
+        pushup(k);
+    }
+}
+void update(int p, int v, int l, int r, int k)//p为下标，v为要加上的值，[l,r]为结点区间, k为结点下标,
+{
+    if (l == r)a[p] += v, c[k] += v;
+    else
+    {
+        int m = l + ((r - l) >> 1);
+        if (p <= m)update(p, v, l, m, k << 1);
+        else update(p, v, m + 1, r, k << 1 | 1);
+        pushup(k);
+    }
+}
+int query(int L, int R, int l, int r, int k)//[L,R]即为要查询的区间，[l,r]为结点区间，k为结点下标
+{
+    if (L <= l && r <= R)return c[k];
+    else
+    {
+        int ans = 0;
+        int m = l + ((r - l) >> 1);
+        if (L <= m)ans += query(L, R, l, m, k << 1);
+        if (R > m)ans += query(L, R, m + 1, r, k << 1 | 1);
+        return ans;
+    }
+}

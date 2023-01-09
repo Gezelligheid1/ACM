@@ -1,0 +1,72 @@
+<div align = "center">行列式mod p的值</div>
+
+```c++
+#include<bits/stdc++.h>
+
+using namespace std;
+typedef long long ll;
+typedef unsigned long long ull;
+const int N = 605;
+int n, m, k;
+int a[N][N];
+int mod;
+
+int det()
+{
+    int ans = 1;
+    for (int i = 1; i <= n; i++)
+    {
+        int *x = 0, *y = 0;
+        for (int j = i; j <= n; j++)
+        {
+            if (a[j][i] && (x == nullptr || a[j][i] < x[i]))
+            {
+                x = a[j];
+            }
+        }
+        if (x == 0)
+        {
+            return 0;
+        }
+        for (int j = i; j <= n; j++)
+        {
+            if (a[j] != x && a[j][i])
+            {
+                y = a[j];
+                while (1)
+                {
+                    int v = mod - y[i] / x[i], k = i;
+                    for (; k <= n; k++)
+                    {
+                        y[k] = (y[k] + ull(x[k]) * v) % mod;
+                    }
+                    if (!y[i]) break;
+                    swap(x, y);
+                }
+            }
+        }
+        if (x != a[i])
+        {
+            for (int k = i; k <= n; k++)
+            {
+                swap(x[k], a[i][k]);
+            }
+            ans = mod - ans;
+        }
+        ans = 1LL * ans * a[i][i] % mod;
+    }
+    return (ans % mod + mod) % mod;
+}
+
+
+int main()
+{
+    cin >> n >> mod;
+    for (int i = 1; i <= n; i++)
+        for (int j = 1; j <= n; j++)
+            scanf("%d", &a[i][j]), a[i][j] %= mod;
+    cout << det();
+    return 0;
+}
+```
+

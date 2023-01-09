@@ -1,0 +1,115 @@
+#include <bits/stdc++.h>
+#include <ext/pb_ds/tree_policy.hpp>
+#include <ext/pb_ds/trie_policy.hpp>
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/priority_queue.hpp>
+
+using namespace std;
+using namespace __gnu_pbds;
+using namespace __gnu_cxx;
+typedef long long ll;
+//tree<int, null_type, less<int>, rb_tree_tag, tree_order_statistics_node_update> tr;
+//__gnu_pbds::priority_queue<int, greater<int>, pairing_heap_tag> qu;
+//typedef trie<string, null_type, trie_string_access_traits<>, pat_trie_tag, trie_prefix_search_node_update> pref_trie;
+const int N = 200005;
+int n, m, k;
+int a[N];
+
+int main()
+{
+    int i, j, g, p, q, u, v, w, x, y, z, T;
+
+    return 0;
+}
+
+//#pragma comment(linker, "/STACK:1024000000,1024000000")
+
+
+/*
+tree
+
+#define PII pair<int, int>
+#define mp_(x, y) make_pair(x, y)
+tree<int, null_type, less<int>, rb_tree_tag, tree_order_statistics_node_update> tr;
+/// rb_tree_tag 和 splay_tree_tag 选择树的类型(红黑树和伸展树)
+null_type//无映射（g++为null_mapped_type）
+less<PII>//从小到大排序
+tree_order_statistics_node_update//更新方式
+
+tr.insert(mp_(x, y));//插入
+tr.erase(mp_(x, y));//删除
+tr.order_of_key(PII(x, y));//求排名
+tr.find_by_order(x);//找k小值，返回迭代器
+tr.join(b);//将b并入tr，前提是两棵树类型一致并且二没有重复元素
+tr.split(v, b);//分裂，key小于等于v的元素属于tr，其余属于b
+tr.lower_bound(x);//返回第一个大于等于x的元素的迭代器
+tr.upper_bound(x);//返回第一个大于x的元素的迭代器
+//以上的所有操作的时间复杂度均为O(logn)
+//注意，插入的元素会去重，如set
+
+//显然迭代器可以++，--运算
+*/
+
+
+/*
+trie树
+
+tr.insert(s); //插入s 
+tr.erase(s); //删除s 
+tr.join(b); //将b并入tr 
+
+pref_trie tr;
+    tr.insert("543");
+    tr.insert("632");
+    tr.insert("522");
+    string s = "522";
+    cout << s.substr(0, 0) << endl;
+    auto range = tr.prefix_range(s.substr(0, 0));//类型为pair<pref_trie iterator,pref_trie iterator>
+    for (auto it = range.first; it != range.second; ++it)
+        cout << *it << endl;
+*/
+
+/*
+bitset<8> foo ("10011011");
+
+    cout << foo.count() << endl;　　//5　 （count函数用来求bitset中1的位数，foo中共有５个１
+    cout << foo.size() << endl;　　 //8　　（size函数用来求bitset的大小，一共有８位
+
+    cout << foo.test(0) << endl;　　//true　　（test函数用来查下标处的元素是０还是１，并返回false或true，此处foo[0]为１，返回true
+    cout << foo.test(2) << endl;　　//false　　（同理，foo[2]为０，返回false
+
+    cout << foo.any() << endl;　　//true　　（any函数检查bitset中是否有１
+    cout << foo.none() << endl;　　//false　　（none函数检查bitset中是否没有１
+    cout << foo.all() << endl;　　//false　　（all函数检查bitset中是全部为１
+    cout << foo.flip(2) << endl;　　//10011111　　（flip函数传参数时，用于将参数位取反，本行代码将foo下标２处"反转"，即０变１，１变０
+    cout << foo.flip() << endl;　　 //01100000　　（flip函数不指定参数时，将bitset每一位全部取反
+
+    cout << foo.set() << endl;　　　　//11111111　　（set函数不指定参数时，将bitset的每一位全部置为１
+    cout << foo.set(3,0) << endl;　　//11110111　　（set函数指定两位参数时，将第一参数位的元素置为第二参数的值，本行对foo的操作相当于foo[3]=0
+    cout << foo.set(3) << endl;　　  //11111111　　（set函数只有一个参数时，将参数下标处置为１
+
+    cout << foo.reset(4) << endl;　　//11101111　　（reset函数传一个参数时将参数下标处置为０
+    cout << foo.reset() << endl;　　 //00000000　　（reset函数不传参数时将bitset的每一位全部置为０
+*/
+
+/*
+以下均为32位，64位请在末尾加上ll，如__builtin_popcountll(x)
+• __builtin_ffs (unsigned int x)
+返回x的最后一位1的是从后向前第几位，比如7368（1110011001000）返回4。
+• __builtin_clz (unsigned int x)
+返回前导的0的个数。
+• __builtin_ctz (unsigned int x)
+返回后面的0个个数，和__builtin_clz相对。
+• __builtin_popcount (unsigned int x)
+返回二进制表示中1的个数。
+• __builtin_parity (unsigned int x)
+返回x的奇偶校验位，也就是x的1的个数模2的结果。
+
+此外，这些函数都有相应的usigned long和usigned long long版本，只需要在函数名后面加上l或ll就可以了，比如 __builtin_clzll。
+*/
+
+/*
+c++随机数
+default_random_engine e(time(0));
+uniform_int_distribution<long long>u1(0,1e18),u2(0,1e5);
+*/

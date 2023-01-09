@@ -1,0 +1,21 @@
+<div align = "center">欧拉筛 log分解</div>
+
+```C++
+int prime[50005] = { 0 };
+int vis[700000] = { 0 };
+const int maxn = 611953;//第50000个素数
+int cnt = 0;
+void Prime()
+{
+    for (int i = 2; i <= maxn; i++)
+    {
+        if (!vis[i])prime[++cnt] = i, vis[i] = i;//prime数组从prime[1]开始.
+        for (int j = 1; j <= cnt && i * prime[j] <= maxn; j++)
+        {
+            vis[i * prime[j]] = prime[j];
+            if (i % prime[j] == 0)break;
+        }
+    }
+}
+```
+

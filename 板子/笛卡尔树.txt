@@ -1,0 +1,33 @@
+//小根堆，根的值最小
+
+const int N = 10000005;
+int n, m, k;
+int a[N], lc[N], rc[N], stk[N], rt;
+
+void build()
+{
+    int top = 0;
+    for (int i = 1; i <= n; i++)
+    {
+        int now = top;
+        while (top && a[stk[top]] > a[i])top--;
+        if (top)rc[stk[top]] = i;
+        if (top < now)lc[i] = stk[top + 1];
+        stk[++top] = i;
+    }
+    rt = stk[1];
+}
+
+int main()
+{
+    int p, q, u, v, w, x, y, z, T;
+    cin >> n;
+    for (int i = 1; i <= n; i++)
+        scanf("%d", &a[i]);
+    build();
+    ll sum1 = 0, sum2 = 0;
+    for (int i = 1; i <= n; i++)
+        sum1 ^= (ll) i * (lc[i] + 1), sum2 ^= (ll) i * (rc[i] + 1);
+    cout << sum1 << " " << sum2;
+    return 0;
+}

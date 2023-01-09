@@ -1,0 +1,77 @@
+const int N = 200005;
+int n, m, k;
+ll a[405][405];
+int is[405], js[405];
+const ll mod = 1e9 + 7;
+const ll mod2 = mod * mod;
+
+ll fpow(ll x, ll r)
+{
+    ll result = 1;
+    while (r)
+    {
+        if (r & 1)result = result * x % mod;
+        r >>= 1;
+        x = x * x % mod;
+    }
+    return result;
+}
+
+int gauss(int n, ll a[][405])//矩阵求逆,改成ull可以减小常数
+{
+    int i, j, k;
+    for (k = 1; k <= n; ++k)
+    {
+        for (i = k; i <= n; ++i)
+        {
+            for (j = k; j <= n && !a[i][j]; ++j);
+            is[k] = i, js[k] = j;
+        }
+        for (i = 1; i <= n; ++i)
+            swap(a[k][i], a[is[k]][i]);
+        for (i = 1; i <= n; ++i)
+            swap(a[i][k], a[i][js[k]]);
+        if (!a[k][k])
+            return 0;
+        a[k][k] = fpow(a[k][k], mod - 2);
+        for (j = 1; j <= n; ++j)
+            if (j != k)
+                (a[k][j] *= a[k][k]) %= mod;
+        for (i = 1; i <= n; ++i)
+            if (i != k)
+            {
+                ll temp = a[i][k];
+                a[i][k] = 0;
+                for (j = 1; j <= n; ++j)
+                    (a[i][j] += mod2 - a[k][j] * temp) %= mod;
+            }
+    }
+    for (k = n; k; --k)
+    {
+        for (i = 1; i <= n; ++i)
+            swap(a[js[k]][i], a[k][i]);
+        for (i = 1; i <= n; ++i)
+            swap(a[i][is[k]], a[i][k]);
+    }
+    return 1;
+}
+
+int main()
+{
+    int i, j, t, p, q, u, v, w, x, y, z, T;
+    scanf("%d", &n);
+    for (i = 1; i <= n; i++)
+        for (j = 1; j <= n; j++)
+            scanf("%lld", &a[i][j]);
+    if (gauss(n, a))
+    {
+        for (i = 1; i <= n; i++)
+        {
+            for (j = 1; j <= n; j++)
+                printf("%lld ", a[i][j]);
+            puts("");
+        }
+    }
+    else puts("No Solution");
+    return 0;
+}

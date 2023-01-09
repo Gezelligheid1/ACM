@@ -1,0 +1,61 @@
+//kmp
+
+const int N = 200005;
+int nex[N];
+string s, t;
+
+void getnext()
+{
+    int j = 0, k = -1;
+    nex[0] = -1;
+    int len = t.length();
+    while (j < len)
+    {
+        if (k == -1 || t[j] == t[k])
+        {
+            nex[++j] = ++k;
+        }
+        else k = nex[k];
+    }
+}
+
+void kmp()//t为s里要找的串
+{
+    int j = 0, k = 0;
+    getnext();
+    int lens = s.length(), lent = t.length();
+    while (j < lens)
+    {
+        if (k == -1 || s[j] == t[k])
+        {
+            ++j, ++k;
+        }
+        else k = nex[k];
+        if (k == lent)printf("%d\n", j - lent + 1), k = nex[k];
+    }
+}
+
+优化：
+
+int nex[N];
+ 
+pair<int, int> getnext(string &t)
+{
+    int j = 0, k = -1;
+    nex[0] = -1;
+    int len = t.length();
+    while (j < len)
+    {
+        if (k == -1 || t[j] == t[k])
+        {
+            ++j, ++k;
+            if (t[j] != t[k])nex[j] = k;
+            else nex[j] = nex[k];
+        }
+        else k = nex[k];
+    }
+    return pair<int, int>{j, k};
+}
+
+
+

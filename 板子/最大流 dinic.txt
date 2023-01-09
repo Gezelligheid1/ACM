@@ -1,0 +1,85 @@
+const int N = 100005;
+int n, m, k;
+
+template<const int N>
+struct Dinic
+{
+#define int ll
+    const int inf = 1e9;
+    struct edge
+    {
+        int to, cap, rev;
+    };
+    vector<edge> G[N];
+    int lev[N], cur[N];
+
+    inline void add(int x, int y, int c)
+    {
+        G[x].push_back({y, c, (int) G[y].size()});
+        G[y].push_back({x, 0, (int) G[x].size() - 1});
+    }
+
+    void bfs(int s)
+    {
+        queue<int> qu;
+        memset(lev, -1, sizeof(lev));
+        for (lev[s] = 0, qu.push(s); qu.size();)
+        {
+            int x = qu.front();
+            qu.pop();
+            for (auto &e:G[x])
+                if (e.cap > 0 && lev[e.to] < 0)
+                    lev[e.to] = lev[x] + 1, qu.push(e.to);
+        }
+    }
+
+    int dfs(int x, int t, int f)
+    {
+        if (x == t)return f;
+        for (int &i = cur[x], d; i < G[x].size(); i++)
+        {
+            auto &e=G[x][i];
+            if (e.cap > 0 && lev[x] < lev[e.to])
+                if ((d = dfs(e.to, t, min(f, e.cap))) > 0)
+                {
+                    e.cap -= d;
+                    G[e.to][e.rev].cap += d;
+                    return d;
+                }
+        }
+        return 0;
+    }
+
+    ll maxflow(int s, int t)
+    {
+        for (ll flow = 0, f;;)
+        {
+            bfs(s);
+            if (lev[t] < 0)return flow;
+
+            memset(cur, 0, sizeof(cur));
+            while ((f = dfs(s, t, inf)) > 0)
+                flow += f;
+        }
+    }
+
+#undef int
+};
+
+Dinic<205> dinic;
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int s, t;
+    cin >> n >> m >> s >> t;
+    while (m--)
+    {
+        int u, v, w;
+        cin >> u >> v >> w;
+        dinic.add(u, v, w);
+    }
+    cout << dinic.maxflow(s, t);
+    return 0;
+}

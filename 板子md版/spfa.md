@@ -1,0 +1,43 @@
+<div align = "center">spfa</div>
+
+```c++
+const int N = 100005;
+int n, m, k;
+int vis[N], d[N], in[N];
+struct point
+{
+    int v, w;
+};
+vector<point> vec[N];
+
+bool spfa(int s)
+{
+    memset(vis, 0, sizeof(vis));
+    memset(in, 0, sizeof(in));
+    memset(d, 60, sizeof(d));
+    queue<int> qu;
+    qu.push(s);
+    vis[s] = 1;
+    d[s] = 0;
+    while (!qu.empty())
+    {
+        int u = qu.front();
+        qu.pop();
+        vis[u] = 0;
+        for (auto &x:vec[u])
+        {
+            if (d[x.v] > d[u] + x.w)
+            {
+                d[x.v] = d[u] + x.w;
+                if (!vis[x.v])
+                {
+                    qu.push(x.v);
+                    vis[x.v] = 1;
+                    if (++in[x.v] > n)return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+```

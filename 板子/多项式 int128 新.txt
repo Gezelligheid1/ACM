@@ -1,0 +1,195 @@
+namespace polybase {//模数为2e18左右,别忘记改模数和原根,main函数里如果有乘法别忘了int128
+    constexpr ll mod = 1945555039024054273, g = 5, L = 1 << 20;
+
+    ll fpow(ll x, ll r)
+    {
+        ll result = 1;
+        while (r)
+        {
+            if (r & 1)result = (__int128) result * x % mod;
+            r >>= 1;
+            x = (__int128) x * x % mod;
+        }
+        return result;
+    }
+
+    ll w[L], _ = []
+    {
+        ll x = fpow(g, (mod - 1) / L);
+        w[L / 2] = 1;
+        for (int i = L / 2 + 1; i < L; i++)
+            w[i] = (__int128) w[i - 1] * x % mod;
+        for (int i = L / 2 - 1; i >= 0; i--)
+            w[i] = w[i << 1];
+        return 0;
+    }();
+
+    inline int norm(int n) { return 1 << __lg(n * 2 - 1); }
+
+    void dft(ll *a, int n)
+    {
+        for (int k = n >> 1; k; k >>= 1)
+            for (int i = 0; i < n; i += k << 1)
+                for (int j = 0; j < k; j++)
+                {
+                    ll &x = a[i + j], y = a[i + j + k];
+                    a[i + j + k] = (__int128) (x - y + mod) * w[k + j] % mod;
+                    x += y;
+                    if (x >= mod)x -= mod;
+                }
+    }
+
+    void idft(ll *a, int n)
+    {
+        for (int k = 1; k < n; k <<= 1)
+            for (int i = 0; i < n; i += k << 1)
+                for (int j = 0; j < k; j++)
+                {
+                    ll x = a[i + j], y = (__int128) a[i + j + k] * w[k + j] % mod;
+                    a[i + j + k] = x - y < 0 ? x - y + mod : x - y;
+                    a[i + j] += y;
+                    if (a[i + j] >= mod)a[i + j] -= mod;
+                }
+        const ll inv = mod - (mod - 1) / n;
+        for (int i = 0; i < n; i++)
+            a[i] = (__int128) a[i] * inv % mod;
+        reverse(a + 1, a + n);
+    }
+
+    struct poly : public vector<ll>
+    {
+        using vector<ll>::vector;
+#define T (*this)
+
+        poly modxk(int k) const
+        {
+            k = min(k, (int) size());
+            return poly(begin(), begin() + k);
+        }
+
+        poly rev() const { return poly(rbegin(), rend()); }
+
+        friend void dft(poly &a) { dft(a.data(), a.size()); }
+
+        friend void idft(poly &a) { idft(a.data(), a.size()); }
+
+        friend poly operator*(const poly &x, const poly &y)
+        {
+            if (x.empty() || y.empty())return poly();
+            poly a(x), b(y);
+            int len = a.size() + b.size() - 1;
+            int n = norm(len);
+            a.resize(n), b.resize(n);
+            dft(a), dft(b);
+            for (int i = 0; i < n; i++)
+                a[i] = (__int128) a[i] * b[i] % mod;
+            idft(a);
+            a.resize(len);
+            return a;
+        }
+
+        poly operator+(const poly &b)
+        {
+            poly a(T);
+            if (a.size() < b.size())
+                a.resize(b.size());
+            for (int i = 0; i < b.size(); i++)//用b.size()防止越界
+            {
+                a[i] += b[i];
+                if (a[i] >= mod)a[i] -= mod;
+            }
+            return a;
+        }
+
+        poly operator-(const poly &b)
+        {
+            poly a(T);
+            if (a.size() < b.size())
+                a.resize(b.size());
+            for (int i = 0; i < b.size(); i++)
+            {
+                a[i] -= b[i];
+                if (a[i] < 0)a[i] += mod;
+            }
+            return a;
+        }
+
+        poly operator*(const ll p)
+        {
+            poly a(T);
+            for (auto &x:a)
+                x = (__int128) x * p % mod;
+            return a;
+        }
+
+        poly &operator<<=(int r) { return insert(begin(), r, 0), T; }//注意逗号,F(x)*(x^r)
+
+        poly operator<<(int r) const { return poly(T) <<= r; }
+
+        poly operator>>(int r) const { return r >= size() ? poly() : poly(begin() + r, end()); }
+
+        poly &operator>>=(int r) { return T = T >> r; }//F[x]/(x^r)
+
+        poly deriv()//求导
+        {
+            if (empty())return T;
+            poly a(size() - 1);
+            for (int i = 1; i < size(); i++)//注意是size()
+                a[i - 1] = (__int128) T[i] * i % mod;
+            return a;
+        }
+
+        poly integ()//积分
+        {
+            poly a(size() + 1);
+            for (int i = 1; i < a.size(); i++)//注意是a.size()
+                a[i] = (__int128) T[i - 1] * fpow(i, mod - 2) % mod;
+            return a;
+        }
+
+        poly inv(int n)
+        {
+            poly a{fpow(T[0], mod - 2)};
+            int k = 1;
+            while (k < n)
+            {
+                k <<= 1;
+                a = (a * 2 - modxk(k) * a * a).modxk(k);
+            }
+            return a.modxk(n);
+        }
+
+        poly sqrt(int n)//f[0]必须等于1
+        {
+            poly a{1};
+            int k = 1;
+            const ll inv2 = fpow(2, mod - 2);
+            while (k < n)
+            {
+                k <<= 1;
+                a = ((modxk(k) * a.inv(k)).modxk(k) + a) * inv2;
+            }
+            return a.modxk(n);
+        }
+
+        poly ln(int n)//需要保证f[0]=1
+        {
+            return (deriv() * inv(n)).integ().modxk(n);
+        }
+
+        poly exp(int n)//需要保证f[0]=0
+        {
+            poly a{1};
+            int k = 1;
+            while (k < n)
+            {
+                k <<= 1;
+                a = (a * (poly{1} - a.ln(k) + modxk(k))).modxk(k);
+            }
+            return a.modxk(n);
+        }
+
+#undef T
+    };
+}
+using namespace polybase;

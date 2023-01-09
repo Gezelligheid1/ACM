@@ -1,0 +1,115 @@
+// trie树spy指针版
+// Created by spy on 2021/5/23.
+//
+
+#ifndef INFOSYS_TRIE_H
+#define INFOSYS_TRIE_H
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+template<typename T>
+class trie {
+private:
+	struct node {
+		T data;
+		bool used;
+		node *next[27];
+	} *root;
+
+	node *newNode() {
+		node *p = (node *) malloc(sizeof(node));
+		memset(p->next, 0, sizeof p->next);
+		p->used = false;
+		return p;
+	}
+
+	bool dfs(char *str, int i, node *p);
+
+public:
+	trie();
+
+	bool insert(char *str, T data);
+
+	T *find(char *str);
+
+	bool erase(char *str);
+};
+
+template<typename T>
+trie<T>::trie() {
+	root = newNode();
+}
+
+template<typename T>
+bool trie<T>::insert(char *str, T data) {
+	for (int i = 0; i < strlen(str); ++i) {
+		if ((str[i] < 'a' || str[i] > 'z') && str[i] != '_')
+			return false;
+	}
+	node *p = root;
+	for (int i = 0; i < strlen(str); ++i) {
+		int k = str[i] == '_' ? 26 : str[i] - 'a';
+		if (p->next[k] == nullptr)
+			p->next[k] = newNode();
+		p = p->next[k];
+	}
+	p->data = data;
+	p->used = true;
+	return true;
+}
+
+template<typename T>
+T *trie<T>::find(char *str) {
+	for (int i = 0; i < strlen(str); ++i) {
+		if ((str[i] < 'a' || str[i] > 'z') && str[i] != '_')
+			return nullptr;
+	}
+	node *p = root;
+	for (int i = 0; i < strlen(str); ++i) {
+		int k = str[i] == '_' ? 26 : str[i] - 'a';
+		if (p->next[k] == nullptr)
+			return nullptr;
+		p = p->next[k];
+	}
+	if (!p->used)
+		return nullptr;
+	return &p->data;
+}
+
+template<typename T>
+bool trie<T>::erase(char *str) {
+	for (int i = 0; i < strlen(str); ++i) {
+		if ((str[i] < 'a' || str[i] > 'z') && str[i] != '_')
+			return false;
+	}
+	return dfs(str, -1, root);
+}
+
+template<typename T>
+bool trie<T>::dfs(char *str, int i, trie::node *p) {
+	if (i == strlen(str) - 1) {
+		p->used = false;
+		return true;
+	}
+	int k = str[i + 1] == '_' ? 26 : str[i + 1] - 'a';
+	if (p->next[k] == nullptr)
+		return false;
+	if (!dfs(str, i + 1, p->next[k]))
+		return false;
+	bool ok = false;
+	for (int j = 0; j < 27; ++j) {
+		if (p->next[k]->next[j] != nullptr) {
+			ok = true;
+			break;
+		}
+	}
+	if (p->next[k]->used)
+		ok = true;
+	if (!ok)
+		p->next[k] = nullptr;
+	return true;
+}
+
+#endif //INFOSYS_TRIE_H

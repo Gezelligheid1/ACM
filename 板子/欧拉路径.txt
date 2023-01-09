@@ -1,0 +1,53 @@
+/*
+欧拉路径判定（是否存在）：
+有向图欧拉路径：图中恰好存在 1 个点出度比入度多 1（这个点即为 起点 S），1 个点入度比出度多 1（这个点即为 终点 T），其余节点出度=入度。
+有向图欧拉回路：所有点的入度=出度（起点 S 和终点 T 可以为任意点）。
+无向图欧拉路径：图中恰好存在 2 个点的度数是奇数，其余节点的度数为偶数，这两个度数为奇数的点即为欧拉路径的 起点 S 和 终点 T。
+无向图欧拉回路：所有点的度数都是偶数（起点 S 和终点 T 可以为任意点）。
+注：存在欧拉回路（即满足存在欧拉回路的条件），也一定存在欧拉路径。
+一副图有欧拉路径，还必须满足将它的有向边视为无向边后它是连通的，连通性的判断我们可以使用并查集或 dfs 等。
+*/
+
+//这题已满足无向图连通，否则可用并查集判断连通性
+//本题求有向图最小字典序欧拉路径
+const int N = 200005;
+int n, m, k;
+int in[N], out[N], st[N];
+vector<int> vec[N];
+stack<int> stk;
+
+void dfs(int u)
+{
+    for (int i = st[u]; i < vec[u].size(); i = st[u])//注意是i=st[u]
+    {
+        st[u] = i + 1;
+        dfs(vec[u][i]);
+    }
+    stk.push(u);
+}
+
+int main()
+{
+    int p, q, u, v, w, x, y, z, T;
+    cin >> n >> m;
+    for (int i = 1; i <= m; i++)
+        scanf("%d%d", &u, &v), vec[u].emplace_back(v), in[v]++, out[u]++;
+    bool flag = true;
+    int t0 = 0, t1 = 0, s = 1;
+    for (int i = 1; i <= n; i++)
+    {
+        sort(vec[i].begin(), vec[i].end());
+        if (in[i] != out[i])flag = false;
+        if (in[i] == out[i] + 1)t0++;
+        else if (in[i] + 1 == out[i])t1++, s = i;
+    }
+    if (!flag && !(t0 == 1 && t1 == 1))
+    {
+        puts("No");
+        return 0;
+    }
+    dfs(s);
+    while (!stk.empty())
+        printf("%d ", stk.top()), stk.pop();
+    return 0;
+}

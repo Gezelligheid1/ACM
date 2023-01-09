@@ -1,0 +1,104 @@
+#include <bits/stdc++.h>
+#include <ext/pb_ds/tree_policy.hpp>
+#include <ext/pb_ds/trie_policy.hpp>
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/priority_queue.hpp>
+
+using namespace std;
+using namespace __gnu_pbds;
+using namespace __gnu_cxx;
+typedef long long ll;
+//tree<int, null_type, less<int>, rb_tree_tag, tree_order_statistics_node_update> tr;
+//__gnu_pbds::priority_queue<int, greater<int>, pairing_heap_tag> qu;
+//typedef trie<string, null_type, trie_string_access_traits<>, pat_trie_tag, trie_prefix_search_node_update> pref_trie;
+const int N = 200005;
+int n, m, k;
+int st[N], ed[N];//可以优化到(N>>k)+5
+ll a[N], lazy[N], f[N];//f[N]是第i块的和.
+
+void update(int x, int y, int p)
+{
+    int L = x >> k, R = y >> k;
+    if (L + 1 >= R)
+    {
+        for (int i = x; i <= y; i++)
+        {
+            a[i] += p;
+            f[i >> k] += p;
+        }
+    }
+    else
+    {
+        for (int i = L + 1; i < R; i++)
+            f[i] += p * (1 << k), lazy[i] += p;
+        for (int i = x; i <= ed[L]; i++)
+            a[i] += p, f[L] += p;
+        for (int i = st[R]; i <= y; i++)
+            a[i] += p, f[R] += p;
+    }
+}
+
+ll query(int x, int y)
+{
+    int L = x >> k, R = y >> k;
+    ll ans = 0;
+    if (L + 1 >= R)
+    {
+        for (int i = x; i <= y; i++)
+            ans += a[i] + lazy[i >> k];
+    }
+    else
+    {
+        for (int i = L + 1; i < R; i++)
+            ans += f[i];
+        ans += lazy[L] * (ed[L] - x + 1) + lazy[R] * (y - st[R] + 1);
+        for (int i = x; i <= ed[L]; i++)
+            ans += a[i];
+        for (int i = st[R]; i <= y; i++)
+            ans += a[i];
+    }
+    return ans;
+}
+
+int main()
+{
+    int i, j, t, g, p, q, u, v, w, x, y, z, T;
+    scanf("%d%d", &n, &m);
+    for (i = 1; i <= n; i++)
+        scanf("%lld", &a[i]);
+    p = sqrt(n);
+    for (k = 0; 1 << k < p; k++);//k不要混用!!! 块的编号从0开始.
+    for (i = 1; i <= n; i++)
+        ed[i >> k] = i, f[i >> k] += a[i];
+    for (i = n; i; i--)
+        st[i >> k] = i;
+    //cout << k << " " << (1 << k) << " " << ed[0] - st[0] + 1 << endl;
+    while (m--)
+    {
+        scanf("%d", &p);
+        if (p == 1)
+        {
+            scanf("%d%d%d", &x, &y, &v);
+            update(x, y, v);
+        }
+        else if (p == 2)
+        {
+            scanf("%d", &v);
+            a[1] += v;
+            f[0] += v;
+        }
+        else if (p == 3)
+        {
+            scanf("%d", &v);
+            a[1] -= v;
+            f[0] -= v;
+        }
+        else if (p == 4)
+        {
+            scanf("%d%d", &x, &y);
+            printf("%lld\n", query(x, y));
+        }
+        else printf("%lld\n", a[1] + lazy[0]);
+    }
+    return 0;
+}

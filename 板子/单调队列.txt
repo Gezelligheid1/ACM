@@ -1,0 +1,67 @@
+//单调队列
+
+const int N = 2000005;
+int a[N];
+int p[N], q[N];
+
+
+int main()
+{
+    int i, j, k, n, m, t, g, x, y, T;
+    cin >> n >> k;
+    for (i = 1; i <= n; i++)
+        scanf("%d", &a[i]);
+    int head = 1, tail = 0;
+    for (i = 1; i <= n; i++)//最小值.
+    {
+        while (head <= tail && p[tail] >= a[i])tail--;
+        p[++tail] = a[i];
+        q[tail] = i;
+        while (q[head] <= i - k)head++;
+        if (i >= k)printf("%d ", p[head]);//p数组可以用a[q[head]]替代.
+    }
+    puts("");
+    head = 1, tail = 0;
+    for (i = 1; i <= n; i++)//最大值.
+    {
+        while (head <= tail && p[tail] <= a[i])tail--;
+        p[++tail] = a[i];
+        q[tail] = i;
+        while (q[head] <= i - k)head++;
+        if (i >= k)printf("%d ", p[head]);
+    }
+    return 0;
+}
+
+
+//p数组用a[q[head]]替代
+const int N = 2000005;
+int a[N];
+int p[N], q[N];
+
+
+int main()
+{
+    int i, j, k, n, m, t, g, x, y, T;
+    cin >> n >> k;
+    for (i = 1; i <= n; i++)
+        scanf("%d", &a[i]);
+    int head = 1, tail = 0;
+    for (i = 1; i <= n; i++)
+    {
+        while (head <= tail && a[q[tail]] >= a[i])tail--;
+        q[++tail] = i;
+        while (q[head] <= i - k)head++;
+        if (i >= k)printf("%d ", a[q[head]]);
+    }
+    puts("");
+    head = 1, tail = 0;
+    for (i = 1; i <= n; i++)
+    {
+        while (head <= tail && a[q[tail]] <= a[i])tail--;
+        q[++tail] = i;
+        while (q[head] <= i - k)head++;
+        if (i >= k)printf("%d ", a[q[head]]);
+    }
+    return 0;
+}

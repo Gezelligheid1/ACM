@@ -1,0 +1,126 @@
+#include <bits/stdc++.h>
+#include <ext/pb_ds/tree_policy.hpp>
+#include <ext/pb_ds/trie_policy.hpp>
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/priority_queue.hpp>
+
+using namespace std;
+using namespace __gnu_pbds;
+using namespace __gnu_cxx;
+typedef long long ll;
+//tree<int, null_type, less<int>, rb_tree_tag, tree_order_statistics_node_update> tr;
+//__gnu_pbds::priority_queue<int, greater<int>, pairing_heap_tag> qu;
+//typedef trie<string, null_type, trie_string_access_traits<>, pat_trie_tag, trie_prefix_search_node_update> pref_trie;
+const int N = 400005;
+int n, m, k;
+int vis[N];
+vector<pair<int, int>> edge[N];
+vector<int> vec[N];
+ll dis[N];
+struct point
+{
+    int u, v, l, a;
+} s[N];
+
+void dijkstra()
+{
+    fill(dis + 1, dis + n * 2 + 1, 1e18);
+    memset(vis, 0, sizeof(vis));
+    dis[1] = 0;
+    std::priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<>> qu;
+    qu.push({0, 1});
+    while (!qu.empty())
+    {
+        int u = qu.top().second;
+        qu.pop();
+        if (vis[u])continue;
+        vis[u] = 1;
+        for (auto[v, w]:edge[u])
+        {
+            if (dis[u] + w < dis[v])
+            {
+                dis[v] = dis[u] + w;
+                qu.push({dis[v], v});
+            }
+        }
+    }
+}
+
+int a[N], bin[N], f[N][20];
+
+int find(int x)
+{
+    return bin[x] == x ? x : bin[x] = find(bin[x]);
+}
+
+void dfs(int u)
+{
+    for (int i = 1; i <= 19; i++)
+        f[u][i] = f[f[u][i - 1]][i - 1];
+    for (auto v:vec[u])
+    {
+        dfs(v);
+        dis[u] = min(dis[u], dis[v]);
+    }
+}
+
+void kruskal()
+{
+    int cnt = n;
+    iota(bin + 1, bin + n * 2 + 1, 1);
+    sort(s + 1, s + m + 1, [&](point u, point v)
+    {
+        return u.a > v.a;
+    });
+    for (int i = 1; i <= m; i++)
+    {
+        if (find(s[i].u) != find(s[i].v))
+        {
+            int fu = find(s[i].u), fv = find(s[i].v);
+            f[fu][0] = f[fv][0] = ++cnt;
+            a[cnt] = s[i].a;
+            vec[cnt].emplace_back(fu), vec[cnt].emplace_back(fv);
+            bin[fu] = bin[fv] = cnt;
+        }
+    }
+    for(int i = 0;i <= 19; i++)
+        f[cnt][i] = 0;
+    dfs(cnt);//别忘了
+}
+
+int main()
+{
+    int p, q, u, v, w, x, y, z, T;
+    cin >> T;
+    while (T--)
+    {
+        scanf("%d%d", &n, &m);
+        for (int i = 1; i <= n * 2; i++)
+            vec[i].clear(), edge[i].clear();
+        for (int i = 1; i <= m; i++)
+        {
+            scanf("%d%d%d%d", &s[i].u, &s[i].v, &s[i].l, &s[i].a);
+            edge[s[i].u].emplace_back(s[i].v, s[i].l);
+            edge[s[i].v].emplace_back(s[i].u, s[i].l);
+        }
+        dijkstra();
+        kruskal();
+        int k, s;
+        ll lastans = 0;
+        cin >> q >> k >> s;
+        while (q--)
+        {
+            scanf("%d%d", &v, &p);
+            v = (v + lastans * k - 1) % n + 1;
+            p = (p + lastans * k) % (s + 1);
+            int rt = v;
+            for (int i = 19; i >= 0; i--)
+            {
+                int u = f[rt][i];
+                if (a[u] > p)rt = u;
+            }
+            printf("%lld\n", lastans = dis[rt]);
+        }
+    }
+    return 0;
+}

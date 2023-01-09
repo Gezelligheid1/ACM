@@ -1,0 +1,129 @@
+//2-sat不输出解
+
+/*hdoj1824
+小时候，乡愁是一枚小小的邮票，我在这头，母亲在那头。
+                        —— 余光中
+集训是辛苦的，道路是坎坷的，休息还是必须的。经过一段时间的训练，lcy决定让大家回家放松一下，但是训练还是得照常进行，lcy想出了如下回家规定，每一个队（三人一队）或者队长留下或者其余两名队员同时留下；每一对队员，如果队员A留下，则队员B必须回家休息下，或者B留下，A回家。由于今年集训队人数突破往年同期最高记录，管理难度相当大，lcy也不知道自己的决定是否可行，所以这个难题就交给你了，呵呵，好处嘛~，免费**漂流一日。
+Input
+第一行有两个整数，T和M，1<=T<=1000表示队伍数，1<=M<=5000表示对数。
+接下来有T行，每行三个整数，表示一个队的队员编号，第一个队员就是该队队长。
+然后有M行，每行两个整数，表示一对队员的编号。
+每个队员只属于一个队。队员编号从0开始。
+Output
+可行输出yes，否则输出no，以EOF为结束。
+*/
+
+#include <iostream>
+#include <cstdio>
+#include <cmath>
+#include <cstring>
+#include <string>
+#include <algorithm>
+#include <vector>
+#include <queue>
+#include <map>
+#include <set>
+#include <stack>
+
+using namespace std;
+typedef long long ll;
+const int N = 100005;
+int head[2][N], vis[10005], q[10005], f[10005];
+int n, m, t;
+struct Edge
+{
+    int to, prev;
+} edge[2][N];
+int cnt = 0;
+
+void init(int len)
+{
+    t = cnt = 0;
+    for (int i = 0; i <= len; i++)
+        head[0][i] = head[1][i] = q[i] = -1;
+}
+
+void add(int u, int v)
+{
+    edge[0][++cnt].to = v;
+    edge[0][cnt].prev = head[0][u];
+    head[0][u] = cnt;
+
+    edge[1][cnt].to = u;
+    edge[1][cnt].prev = head[1][v];
+    head[1][v] = cnt;
+}
+
+void dfs1(int u)
+{
+    vis[u] = 1;
+    for (int j = head[0][u]; ~j; j = edge[0][j].prev)
+    {
+        if (!vis[edge[0][j].to])dfs1(edge[0][j].to);
+    }
+    q[++t] = u;
+}
+
+void dfs2(int u, int y)
+{
+    vis[u] = 0, f[u] = y;
+    for (int j = head[1][u]; ~j; j = edge[1][j].prev)
+    {
+        if (vis[edge[1][j].to])dfs2(edge[1][j].to, y);
+    }
+}
+
+inline int read()
+{
+    int x = 0, f = 1;
+    char ch = getchar();
+    while (ch < '0' || ch > '9')
+    {
+        if (ch == '-')
+            f = -1;
+        ch = getchar();
+    }
+    while (ch >= '0' && ch <= '9')
+    {
+        x = (x << 1) + (x << 3) + (ch ^ 48);
+        ch = getchar();
+    }
+    return x * f;
+}
+
+int main()
+{
+    int i, j, k, g, p, u, v, w, x, y, z, T;
+    while (scanf("%d%d", &n, &m) == 2)
+    {
+        int base = n * 3;
+        init(base << 1);
+        for (i = 0; i < n; i++)
+        {
+            scanf("%d%d%d", &x, &y, &z);
+            add(x, y + base), add(x, z + base), add(x + base, y), add(x + base, z);
+            add(y + base, x), add(z + base, x), add(y, x + base), add(z, x + base);
+            add(y, z), add(y + base, z + base), add(z, y), add(z + base, y + base);
+        }
+        while (m--)
+        {
+            scanf("%d%d", &x, &y);
+            add(x, y + base);
+            add(y, x + base);
+        }
+        for (i = 0; i < (base << 1); i++)
+            if (!vis[i])dfs1(i);
+        for (i = t; i; i--)
+            if (vis[q[i]])dfs2(q[i], q[i]);
+        bool flag = true;
+        for (i = 0; i < base; i++)
+            if (f[i] == f[base + i])
+            {
+                flag = false;
+                break;
+            }
+        if (flag)puts("yes");
+        else puts("no");
+    }
+    return 0;
+}

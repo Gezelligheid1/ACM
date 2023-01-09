@@ -1,0 +1,233 @@
+<div align = "center">多项式 任意模数 拆系数FFT</div>
+
+```latex
+需要保证输入项均为正!!!
+```
+
+```c++
+namespace FFTComplex {
+    const double PI = acos(-1.0);
+
+    struct C
+    {
+        double x, y;
+
+        C(double x = 0, double y = 0) : x(x), y(y) {}
+
+        C operator!() const { return C(x, -y); }//共轭复数
+    };
+
+    inline C operator*(const C &a, const C &b)
+    {
+        return C(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
+    }
+
+    inline C operator+(const C &a, const C &b)
+    {
+        return C(a.x + b.x, a.y + b.y);
+    }
+
+    inline C operator-(const C &a, const C &b)
+    {
+        return C(a.x - b.x, a.y - b.y);
+    }
+
+    constexpr int L(1 << 20);
+    C w[L];
+    int _ = []
+    {
+        for (int i = 0; i < L / 2; i++)w[i + L / 2] = C(cos(2 * PI * i / L), sin(2 * PI * i / L));
+        for (int i = L / 2 - 1; i; i--)w[i] = w[i << 1];
+        return 0;
+    }();
+
+    void dft(C *a, int n)
+    {
+        for (int k = n >> 1; k; k >>= 1)
+            for (int i = 0; i < n; i += k << 1)
+                for (int j = 0; j < k; j++)
+                {
+                    C x = a[i + j], y = a[i + j + k];
+                    a[i + j + k] = (x - y) * w[j + k];
+                    a[i + j] = x + y;
+                }
+    }
+
+    void idft(C *a, int n)
+    {
+        for (int k = 1; k < n; k <<= 1)
+            for (int i = 0; i < n; i += k << 1)
+                for (int j = 0; j < k; j++)
+                {
+                    C &x = a[i + j], y = a[i + j + k] * w[j + k];
+                    a[i + j + k] = x - y, x = x + y;
+                }
+        for (int i = 0; i < n; i++)
+            a[i].x /= n, a[i].y /= n;
+        reverse(a + 1, a + n);
+    }
+}
+namespace polybase {//需要保证输入项均为正!!!
+    constexpr ll mod(1e9 + 7);
+
+    ll fpow(ll x, ll r)
+    {
+        ll result = 1;
+        while (r)
+        {
+            if (r & 1)result = result * x % mod;
+            r >>= 1;
+            x = x * x % mod;
+        }
+        return result;
+    }
+
+    using namespace FFTComplex;
+
+    int norm(int n) { return 1 << __lg(n * 2 - 1); }
+
+    struct poly : public vector<ll>
+    {
+        using vector<ll>::vector;
+#define T (*this)
+
+        poly modxk(int k) const
+        {
+            k = min(k, (int) size());
+            return poly(begin(), begin() + k);
+        }
+
+        poly rev() const { return poly(rbegin(), rend()); }
+
+        friend poly operator*(const poly &x, const poly &y)
+        {
+            if (x.empty() || y.empty())return poly();
+            poly a(x), b(y);
+            int len = a.size() + b.size() - 1, n = max(2, norm(len));//n=1时该板子卷积部分会有问题
+            vector<C> f(n), g(n), p(n), q(n);
+            for (int i = 0; i < a.size(); i++)
+                f[i] = C(a[i] >> 15, a[i] & 0x7fff);
+            for (int i = 0; i < b.size(); i++)
+                g[i] = C(b[i] >> 15, b[i] & 0x7fff);
+            dft(f.data(), n), dft(g.data(), n);
+            for (int k = 1, i = 0, j; k < n; k <<= 1)
+                for (; i < k * 2; i++)
+                {
+                    j = i ^ (k - 1);
+                    p[i] = C(0.5, 0) * g[i] * (f[i] + !f[j]);
+                    q[i] = C(0, -0.5) * g[i] * (f[i] - !f[j]);
+                }
+            idft(p.data(), n), idft(q.data(), n);
+            a.resize(len);
+            for (int i = 0; i < len; i++)
+            {
+                ll x, y, z, w;
+                x = p[i].x + 0.5;
+                y = p[i].y + 0.5;
+                z = q[i].x + 0.5;
+                w = q[i].y + 0.5;
+                a[i] = ((x % mod << 30) + ((y + z) % mod << 15) + w) % mod;
+            }
+            return a;
+        }
+
+        poly operator+(const poly &b)
+        {
+            poly a(T);
+            if (a.size() < b.size())
+                a.resize(b.size());
+            for (int i = 0; i < b.size(); i++)//用b.size()防止越界
+            {
+                a[i] += b[i];
+                if (a[i] >= mod)a[i] -= mod;
+            }
+            return a;
+        }
+
+        poly operator-(const poly &b)
+        {
+            poly a(T);
+            if (a.size() < b.size())
+                a.resize(b.size());
+            for (int i = 0; i < b.size(); i++)
+            {
+                a[i] -= b[i];
+                if (a[i] < 0)a[i] += mod;
+            }
+            return a;
+        }
+
+        poly operator*(const ll p)
+        {
+            poly a(T);
+            for (auto &x:a)
+                x = x * p % mod;
+            return a;
+        }
+
+        poly &operator<<=(int r) { return insert(begin(), r, 0), T; }//注意逗号,F(x)*(x^r)
+
+        poly operator<<(int r) const { return poly(T) <<= r; }
+
+        poly operator>>(int r) const { return r >= size() ? poly() : poly(begin() + r, end()); }
+
+        poly &operator>>=(int r) { return T = T >> r; }//F[x]/(x^r)
+
+        poly deriv()//求导
+        {
+            if (empty())return T;
+            poly a(size() - 1);
+            for (int i = 1; i < size(); i++)//注意是size()
+                a[i - 1] = T[i] * i % mod;
+            return a;
+        }
+
+        poly integ()//积分
+        {
+            poly a(size() + 1);
+            for (int i = 1; i < a.size(); i++)//注意是a.size()
+                a[i] = T[i - 1] * fpow(i, mod - 2) % mod;
+            return a;
+        }
+
+        poly inv(int n)
+        {
+            poly a{fpow(T[0], mod - 2)};
+            int k = 1;
+            while (k < n)
+            {
+                k <<= 1;
+                a = (a * 2 - modxk(k) * a * a).modxk(k);
+            }
+            return a.modxk(n);
+        }
+
+        poly ln(int n)//需要保证f[0]=1
+        {
+            return (deriv() * inv(n)).integ().modxk(n);
+        }
+
+#undef T
+    };
+    
+    ll divAt(poly f, poly g, ll n)//虽然是任意模数，但仍要求模数为质数
+    {
+        for (; n; n >>= 1)
+        {
+            poly h = g;
+            for (int i = 1; i < h.size(); i += 2)
+                h[i] = mod - h[i];
+            poly u = f * h, v = g * h;
+            f.clear();
+            for (int i = n & 1; i < u.size(); i += 2)
+                f.emplace_back(u[i]);
+            g.clear();
+            for (int i = 0; i < v.size(); i += 2)
+                g.emplace_back(v[i]);
+        }
+        return f.empty() ? 0 : f[0] * fpow(g[0], mod - 2) % mod;
+    }
+    
+}
+using namespace polybase;
+```

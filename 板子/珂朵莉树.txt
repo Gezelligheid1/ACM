@@ -1,0 +1,118 @@
+const int N = 200005;
+int n, m, k;
+int a[N];
+ll seed;
+
+ll rnd()
+{
+    ll ans = seed;
+    seed = (seed * 7 + 13) % ((int) 1e9 + 7);
+    return ans;
+}
+
+ll fpow(ll x, ll r, const ll mod)
+{
+    ll result = 1;
+    while (r)
+    {
+        if (r & 1)result = result * x % mod;
+        r >>= 1;
+        x = x * x % mod;
+    }
+    return result;
+}
+
+struct odt
+{
+    int l, r;
+    mutable ll v;
+
+    odt(int l = 0, int r = -1, ll v = 0) : l(l), r(r), v(v) {};
+
+    bool operator<(const odt &rhs) const
+    {
+        return l < rhs.l;
+    }
+};
+
+set<odt> st;
+
+auto split(int pos)//[l,r]分裂为[l,pos-1]和[pos,r]
+{
+    auto it = st.lower_bound(pos);
+    if (it != st.end() && it->l == pos)return it;
+    --it;
+    int l = it->l, r = it->r;
+    ll v = it->v;
+    st.erase(it);
+    st.insert(odt(l, pos - 1, v));
+    return st.insert(odt(pos, r, v)).first;
+}
+
+void assign(int l, int r, ll v)
+{
+    auto itr = split(r + 1), itl = split(l);//注意先r+1再l,否则l的迭代器可能会失效
+    st.erase(itl, itr);
+    st.insert(odt(l, r, v));
+}
+
+void add(int l, int r, ll v)
+{
+    auto itr = split(r + 1), itl = split(l);
+    for (auto &it = itl; it != itr; ++it)it->v += v;
+}
+
+ll rk(int l, int r, int k)
+{
+    auto itr = split(r + 1), itl = split(l);
+    vector<pair<ll, int>> vec;
+    for (auto &it = itl; it != itr; ++it)
+        vec.emplace_back(it->v, it->r - it->l + 1);
+    sort(vec.begin(), vec.end());
+    for (auto[x, cnt]:vec)
+    {
+        k -= cnt;
+        if (k <= 0)return x;
+    }
+    return -1;
+}
+
+ll query(int l, int r, int x, int y)
+{
+    auto itr = split(r + 1), itl = split(l);
+    ll ans = 0;
+    for (auto &it = itl; it != itr; ++it)
+        ans = (ans + (it->r - it->l + 1) * fpow(it->v % y, x, y)) % y;
+    return ans;
+}
+
+int main()
+{
+    int p, q, u, v, x, y, z, T;
+    int vmax;
+    cin >> n >> m >> seed >> vmax;
+    for (int i = 1; i <= n; i++)
+    {
+        a[i] = rnd() % vmax + 1;
+        st.insert(odt{i, i, a[i]});//不要直接用{i,i,a[i]},initializer_list<X>重载优先于其他重载
+    }
+    for (int i = 1; i <= m; i++)
+    {
+        int op, l, r;
+        op = rnd() % 4 + 1;
+        l = rnd() % n + 1;
+        r = rnd() % n + 1;
+        if (l > r)swap(l, r);
+        if (op == 3)
+            x = rnd() % (r - l + 1) + 1;
+        else
+            x = rnd() % vmax + 1;
+        if (op == 4)
+            y = rnd() % vmax + 1;
+        if (op == 1)add(l, r, x);
+        else if (op == 2)assign(l, r, x);
+        else if (op == 3)printf("%lld\n", rk(l, r, x));
+        else printf("%lld\n", query(l, r, x, y));
+    }
+    return 0;
+}

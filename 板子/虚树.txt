@@ -1,0 +1,104 @@
+const int N = 250005;
+int n, m, k;
+int a[N];
+vector<pair<int, int>> vec[N];
+int f[N][20];
+ll mx[N];
+int nid[N], d[N];
+int dfn;
+
+void dfs1(int u, int fa)
+{
+    d[u] = d[fa] + 1;
+    nid[u] = ++dfn;
+    f[u][0] = fa;
+    for (int i = 1; i < 20; i++)
+        f[u][i] = f[f[u][i - 1]][i - 1];
+    for (auto[v, w]:vec[u])
+    {
+        if (v == fa)continue;
+        mx[v] = min(mx[u], (ll)w);
+        dfs1(v, u);
+    }
+}
+
+int lca(int x, int y)
+{
+    if (d[x] < d[y])swap(x, y);
+    for (int i = 19; i >= 0; i--)
+        if (d[x] - d[y] >= 1 << i)
+            x = f[x][i];
+    if (x == y)return x;
+    for (int i = 19; i >= 0; i--)
+        if (f[x][i] != f[y][i])
+            x = f[x][i], y = f[y][i];
+    return f[x][0];
+}
+
+namespace Virtual_Tree {
+    vector<int> edge[N];
+    int stk[N];
+    int top;
+    ll dp[N];
+
+    void insert(int x)
+    {
+        if (top == 1)
+        {
+            stk[++top] = x;
+            return;
+        }
+        int LCA = lca(x, stk[top]);
+        if (LCA == stk[top])return;
+        while (top > 1 && nid[stk[top - 1]] >= nid[LCA])
+            edge[stk[top - 1]].emplace_back(stk[top]), top--;
+        if (LCA != stk[top])
+            edge[LCA].emplace_back(stk[top]), stk[top] = LCA;//注意这里不用++top
+        stk[++top] = x;
+    }
+
+    void dfs2(int u)
+    {
+        dp[u] = 0;//多次调用dfs2所以要清空
+        for (auto v:edge[u])//注意edge[u]
+        {
+            dfs2(v);
+            dp[u] += dp[v];
+        }
+        if (dp[u])
+            dp[u] = min(dp[u], mx[u]);
+        else dp[u] = mx[u];
+        edge[u].clear();//注意清空
+    }
+}
+using namespace Virtual_Tree;
+
+int main()
+{
+    int p, q, u, v, w, x, y, z, T;
+    cin >> n;
+    fill(mx + 1, mx + n + 1, 1e18);
+    for (int i = 1; i < n; i++)
+        scanf("%d%d%d", &u, &v, &w), vec[u].emplace_back(v, w), vec[v].emplace_back(u, w);
+    dfs1(1, 0);
+    cin >> m;
+    while (m--)
+    {
+        scanf("%d", &k);
+        for (int i = 1; i <= k; i++)
+            scanf("%d", &a[i]);
+        sort(a + 1, a + k + 1, [&](int x, int y)
+        {
+            return nid[x] < nid[y];
+        });
+        top = 0;
+        stk[++top] = 1;
+        for (int i = 1; i <= k; i++)
+            insert(a[i]);
+        while (top > 1)
+            edge[stk[top - 1]].emplace_back(stk[top]), top--;
+        dfs2(1);
+        printf("%lld\n", dp[1]);
+    }
+    return 0;
+}

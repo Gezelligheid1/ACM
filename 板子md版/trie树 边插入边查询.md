@@ -1,0 +1,25 @@
+```c++
+string s;
+int tot = 0;
+struct point {
+    int t;//统计以该单词为前缀和的单词个数(包括自己)
+    int a[26];
+}trie[100005];
+bool insert(string s)
+{
+    int cnt = 0;
+    int i, p = 0;
+    int len = s.length();
+    for (i = 0; i < len; i++)
+    {
+        if (!trie[p].a[s[i] - '0'])
+            trie[p].a[s[i] - '0'] = ++tot;
+        else cnt++;
+        p = trie[p].a[s[i] - '0'];
+        if (trie[p].t || cnt == len)return false;
+    }
+    trie[p].t = 1;
+    return true;
+}
+```
+

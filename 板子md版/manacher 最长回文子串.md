@@ -1,0 +1,49 @@
+<div align = "center">manacher最长回文子串</div>
+
+```c++
+const int N = 23000005;
+int n, m, k;
+string s, t;
+int p[N];//以i为中心的最长回文串半径
+
+void init()
+{
+    s = "^#";
+    for (auto &x:t)
+    {
+        s.push_back(x);
+        s.push_back('#');
+    }
+    s.push_back(0);
+}
+
+int manacher()
+{
+    init();
+    int len = s.length() - 1, mid = 1, maxright = 1, ans = 1;
+    for (int i = 1; i < len; i++)
+    {
+        if (i < maxright)
+            p[i] = min(maxright - i, p[2 * mid - i]);
+        else
+            p[i] = 1;
+        while (s[i - p[i]] == s[i + p[i]])
+            p[i]++;
+        if (maxright < i + p[i])
+        {
+            mid = i;
+            maxright = i + p[i];
+        }
+        ans = max(ans, p[i] - 1);
+    }
+    return ans;
+}
+
+int main()
+{
+    int i, j, p, q, u, v, w, x, y, z, T;
+    cin >> t;
+    cout << manacher();
+    return 0;
+}
+```

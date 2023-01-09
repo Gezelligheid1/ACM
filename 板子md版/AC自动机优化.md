@@ -1,0 +1,85 @@
+<div align = "center">AC自动机优化</div>
+
+```html
+若要求不能出现某些字符串，需要加上ed[p]|=ed[fail[p]]
+```
+
+```c++
+const int N = 2000005;
+int n, m, k;
+int c[N][26], fail[N], ans[N], mp[N], in[N];
+int cnt;
+
+void insert(string &s, int pos)
+{
+    int p = 0;
+    for (auto x:s)
+    {
+        if (!c[p][x - 'a'])c[p][x - 'a'] = ++cnt;
+        p = c[p][x - 'a'];
+    }
+    mp[pos] = p;
+}
+
+void get_fail()
+{
+    queue<int> qu;
+    for (int i = 0; i < 26; i++)
+        if (c[0][i])fail[c[0][i]] = 0, qu.push(c[0][i]);
+    while (!qu.empty())
+    {
+        int p = qu.front();
+        qu.pop();
+        for (int i = 0; i < 26; i++)
+        {
+            if (c[p][i])fail[c[p][i]] = c[fail[p]][i], qu.push(c[p][i]), in[fail[c[p][i]]]++;
+            else c[p][i] = c[fail[p]][i];
+        }
+    }
+}
+
+void topo()
+{
+    queue<int> qu;
+    for (int i = 1; i <= cnt; i++)//注意是cnt
+        if (!in[i])qu.push(i);
+    while (!qu.empty())
+    {
+        int u = qu.front();
+        qu.pop();
+        int v = fail[u];
+        if (!--in[v])qu.push(v);
+        ans[v] += ans[u];
+    }
+}
+
+void query(string &s)
+{
+    int p = 0;
+    for (auto x:s)
+    {
+        p = c[p][x - 'a'];
+        ans[p]++;
+    }
+}
+
+string s[N];
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int p, q, u, v, w, x, y, z, T;
+    cin >> n;
+    for (int i = 1; i <= n; i++)
+        cin >> s[i], insert(s[i], i);
+    get_fail();
+    string t;
+    cin >> t;
+    query(t);
+    topo();
+    for (int i = 1; i <= n; i++)
+        cout << ans[mp[i]] << '\n';
+    return 0;
+}
+```

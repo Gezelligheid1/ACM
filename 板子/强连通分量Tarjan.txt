@@ -1,0 +1,74 @@
+const int N = 200005;
+int n, m, k;
+int a[N], dfn[N], low[N], stk[N], vis[N], belong[N];
+int sum[N], in[N], dp[N];
+vector<int> vec[N], edge[N];
+int Time, top, cnt;
+
+void tarjan(int u)
+{
+    dfn[u] = low[u] = ++Time;
+    stk[++top] = u;
+    vis[u] = 1;
+    for (auto v:vec[u])
+    {
+        if (!dfn[v])
+        {
+            tarjan(v);
+            low[u] = min(low[u], low[v]);
+        }
+        else if (vis[v])//防止横叉边
+            low[u] = min(low[u], dfn[v]);//注意是dfn[v]
+    }
+    if (low[u] == dfn[u])
+    {
+        ++cnt;
+        while (1)
+        {
+            belong[stk[top]] = cnt;
+            sum[cnt] += a[stk[top]];
+            vis[stk[top]] = 0;
+            if (u == stk[top--])break;
+        }
+    }
+}
+
+void topo()
+{
+    queue<int> qu;
+    for (int i = 1; i <= cnt; i++)
+        if (!in[i])qu.push(i), dp[i] = sum[i];
+    while (!qu.empty())
+    {
+        int u = qu.front();
+        qu.pop();
+        for (auto v:edge[u])
+        {
+            if (!--in[v])qu.push(v);
+            dp[v] = max(dp[v], dp[u] + sum[v]);
+        }
+    }
+}
+
+int main()
+{
+    int p, q, u, v, w, x, y, z, T;
+    cin >> n >> m;
+    for (int i = 1; i <= n; i++)
+        scanf("%d", &a[i]);
+    for (int i = 1; i <= m; i++)
+        scanf("%d%d", &u, &v), vec[u].emplace_back(v);
+    for (int i = 1; i <= n; i++)
+        if (!dfn[i])
+            tarjan(i);
+    for (int u = 1; u <= n; u++)
+        for (auto v:vec[u])
+            if (belong[u] != belong[v])
+            {
+                edge[belong[u]].emplace_back(belong[v]);
+                in[belong[v]]++;
+            }
+    topo();
+    cout << *max_element(dp + 1, dp + n + 1);
+    return 0;
+}

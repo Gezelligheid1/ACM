@@ -1,0 +1,99 @@
+const int N = 100005;
+int n, m, k;
+ll x[N << 1];
+
+struct scanline
+{
+    ll l, r, h;
+    int flag;//flag保存1 / -1;
+    scanline() : l(0), r(0), h(0), flag(0) {}
+
+    scanline(ll l, ll r, ll h, int flag) : l(l), r(r), h(h), flag(flag) {}
+
+    bool operator<(const scanline &rhs) const
+    {
+        return h < rhs.h;
+    }
+} line[N << 1];
+
+struct point
+{
+    int cnt;//被完全覆盖的次数
+    ll sum;//区间内被截的长度
+} c[N << 3];//额外乘2
+
+inline void pushup(int l, int r, int k)
+{
+    if (c[k].cnt)//由扫描线顺序知一定大于等于0
+        c[k].sum = x[r + 1] - x[l];
+    else if (l == r)//在叶子节点时返回，避免空间再乘2
+        c[k].sum = 0;
+    else
+        c[k].sum = c[k << 1].sum + c[k << 1 | 1].sum;
+}
+
+void build(int l, int r, int k)
+{
+    if (l == r)c[k] = {0, 0};
+    else
+    {
+        int m = (l + r) >> 1;
+        build(l, m, k << 1);
+        build(m + 1, r, k << 1 | 1);
+        c[k] = {0, 0};
+    }
+}
+
+void update(ll L, ll R, int l, int r, int k, int v)
+{
+    //  l、r表示这个节点管辖的下标范围
+    //  L、R则表示需要修改的真实区间
+    if (x[r + 1] <= L || R <= x[l])return;
+    //  这里加等号的原因：
+    //  假设现在考虑 [2,5], [5,8] 两条线段，要修改 [1,5] 区间的sum
+    //  很明显，虽然5在这个区间内，[5,8] 却并不是我们希望修改的线段
+    //  所以总结一下，就加上了等号
+    if (L <= x[l] && x[r + 1] <= R)
+    {
+        c[k].cnt += v;
+        pushup(l, r, k);
+        return;
+    }
+    int m = (l + r) >> 1;
+    update(L, R, l, m, k << 1, v);
+    update(L, R, m + 1, r, k << 1 | 1, v);
+    pushup(l, r, k);
+}
+
+int main()
+{
+    int i, j, t, g, p, q, u, v, w, y, z, T;
+    int x1, y1, x2, y2;
+    cin >> n;
+    for (i = 1; i <= n; i++)
+    {
+        scanf("%d%d%d%d", &x1, &y1, &x2, &y2);
+        x[i] = x1, x[i + n] = x2;
+        line[i] = {x1, x2, y1, 1};
+        line[i + n] = {x1, x2, y2, -1};
+        //一条线段含两个端点，一个矩形的上下边都需要扫描线扫过
+    }
+    n <<= 1;//方便操作，变为2n
+    sort(line + 1, line + n + 1);
+    sort(x + 1, x + n + 1);
+    int len = unique(x + 1, x + n + 1) - x - 1;
+    if (len == 1)//所有x1,x2集中于一点长度为0的情况,否则下面线段树操作会无限递归 
+    {
+        puts("0");
+        return 0;//视情况而定是否改成continue 
+    }
+    build(1, len - 1, 1);//len-1是因为[1, len - 1]描述的就是[x[1], x[len]]
+    ll ans = 0;
+    for (i = 1; i < n; i++)//这里不需要处理最后一条边,视题目而定
+    {
+        update(line[i].l, line[i].r, 1, len - 1, 1, line[i].flag);//这里用len-1!!!
+        ans += c[1].sum * (line[i + 1].h - line[i].h);
+    }
+    printf("%lld\n", ans);
+    return 0;
+}

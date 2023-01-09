@@ -1,0 +1,77 @@
+<div align = "center">主席树-区间小于等于k的个数</div>
+
+```c++
+#include <bits/stdc++.h>
+#include <ext/pb_ds/tree_policy.hpp>
+#include <ext/pb_ds/trie_policy.hpp>
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/priority_queue.hpp>
+
+using namespace std;
+using namespace __gnu_pbds;
+using namespace __gnu_cxx;
+typedef long long ll;
+//tr<int, null_type, less<int>, rb_tree_tag, tree_order_statistics_node_update> tr;
+//__gnu_pbds::priority_queue<int, greater<int>, pairing_heap_tag> qu;
+//typedef trie<string, null_type, trie_string_access_traits<>, pat_trie_tag, trie_prefix_search_node_update> pref_trie;
+const int N = 200005;
+int n, m, k;
+int a[N], b[N], root[N];
+int cnt;
+struct point
+{
+    int val, l, r;
+} tr[N * 20];
+
+void update(int &node, int last, int l, int r, int x)
+{
+    node = ++cnt;
+    tr[node] = tr[last];
+    ++tr[node].val;
+    if (l == r)return;
+    int m = (l + r) >> 1;
+    if (x <= m)update(tr[node].l, tr[last].l, l, m, x);
+    else update(tr[node].r, tr[last].r, m + 1, r, x);
+}
+
+int query(int node, int last, int l, int r, int k)
+{
+    if (l == r)return tr[node].val - tr[last].val;
+    int sum = tr[tr[node].l].val - tr[tr[last].l].val;
+    int m = (l + r) >> 1;
+    if (k <= m)return query(tr[node].l, tr[last].l, l, m, k);
+    return sum + query(tr[node].r, tr[last].r, m + 1, r, k);
+}
+
+int main()
+{
+    int i, j, t, g, p, q, u, v, w, x, y, T;
+    cin >> T;
+    int kase = 0;
+    while (T--)
+    {
+        printf("Case %d:\n", ++kase);
+        cnt = 0;
+        scanf("%d%d", &n, &q);
+        for (i = 1; i <= n; i++)
+            scanf("%d", &a[i]), b[i] = a[i];
+        sort(b + 1, b + n + 1);
+        int size = unique(b + 1, b + n + 1) - b - 1;
+        for (i = 1; i <= n; i++)
+            a[i] = lower_bound(b + 1, b + size + 1, a[i]) - b;
+        for (i = 1; i <= n; i++)
+            update(root[i], root[i - 1], 1, size, a[i]);
+        while (q--)
+        {
+            scanf("%d%d%d", &x, &y, &p);
+            x++, y++;
+            k = upper_bound(b + 1, b + size + 1, p) - b - 1;
+            if (k)
+                printf("%d\n", query(root[y], root[x - 1], 1, size, k));
+            else puts("0");
+        }
+    }
+    return 0;
+}
+```
+

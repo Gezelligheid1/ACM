@@ -1,0 +1,80 @@
+const int N = 100005;
+int n, m, k;
+
+struct lb
+{
+    int d[35];
+
+    void clear()
+    {
+        memset(d, 0, sizeof(d));
+    }
+
+    void add(int x)
+    {
+        for (int i = 30; i >= 0; i--)
+            if (x & (1 << i))//这题是int
+            {
+                if (d[i])x ^= d[i];
+                else
+                {
+                    d[i] = x;
+                    break;
+                }
+            }
+    }
+
+    void add(lb &x)
+    {
+        for (int i = 30; i >= 0; i--)
+            if (x.d[i])add(x.d[i]);
+    }
+} c[N << 2];
+
+void update(int l, int r, int k, int x, int v)
+{
+    c[k].add(v);
+    if (l == r)return;
+    int m = (l + r) >> 1;
+    if (x <= m)update(l, m, k << 1, x, v);
+    else update(m + 1, r, k << 1 | 1, x, v);
+}
+
+lb ans;
+
+void query(int L, int R, int l, int r, int k)
+{
+    if (L <= l && r <= R)
+    {
+        ans.add(c[k]);
+        return;
+    }
+    int m = (l + r) >> 1;
+    if (L <= m)query(L, R, l, m, k << 1);
+    if (R > m)query(L, R, m + 1, r, k << 1 | 1);
+}
+
+int main()
+{
+    int p, q, u, v, w, x, y, z, T;
+    cin >> n >> m;//这题n m相反
+    while (n--)
+    {
+        int op;
+        scanf("%d%d%d", &op, &x, &y);
+        if (op == 1)update(1, m, 1, x, y);
+        else
+        {
+            ans.clear();
+            query(x, y, 1, m, 1);
+            int res = 0;
+            for (int i = 30; i >= 0; i--)
+            {
+                if (res & (1 << i))continue;
+                if (ans.d[i])res ^= ans.d[i];
+            }
+            printf("%d\n", res);
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,47 @@
+const int N = 200005;
+int n, m, k;
+int dfn[N], low[N], cut[N];
+vector<int> vec[N];
+int Time;
+
+void tarjan(int u, int rt)
+{
+    int child = 0;
+    dfn[u] = low[u] = ++Time;
+    for (auto v:vec[u])
+    {
+        if (!dfn[v])
+        {
+            tarjan(v, rt);
+            low[u] = min(low[u], low[v]);
+            if (u != rt && low[v] >= dfn[u])
+                cut[u] = 1;
+            if (u == rt)
+                child++;
+        }
+        low[u] = min(low[u], dfn[v]);
+    }
+    if (u == rt && child >= 2)cut[u] = 1;
+}
+
+int main()
+{
+    int p, q, u, v, w, x, y, z, T;
+    cin >> n >> m;
+    while (m--)
+    {
+        scanf("%d%d", &u, &v);
+        vec[u].emplace_back(v), vec[v].emplace_back(u);
+    }
+    for (int i = 1; i <= n; i++)
+        if (!dfn[i])
+            tarjan(i, i);
+    int ans = 0;
+    for (int i = 1; i <= n; i++)
+        if (cut[i])ans++;
+    printf("%d\n", ans);
+    for (int i = 1; i <= n; i++)
+        if (cut[i])
+            printf("%d ", i);
+    return 0;
+}

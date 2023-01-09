@@ -1,0 +1,15 @@
+ll Gauss(int n)//常数位为0
+{
+    int cnt = 1;
+    for (int i = 1; i <= n; i++)//列，未知数个数
+    {
+        int cur = cnt;
+        while (cur <= n && !c[cur].test(i))cur++;//行，方程个数
+        if (cur > n)continue;//多解，行
+        if (cur != cnt)swap(c[cur], c[cnt]);
+        for (int j = 1; j <= n; j++)//行
+            if (cnt != j && c[j].test(i))c[j] ^= c[cnt];
+        cnt++;//最后会多1
+    }
+    return fpow(2, n + 1 - cnt);
+}

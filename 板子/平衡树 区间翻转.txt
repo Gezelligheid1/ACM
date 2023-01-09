@@ -1,0 +1,110 @@
+const int N = 200005;
+int n, m, k;
+int son[N][2], f[N], val[N], sz[N], cnt[N], lazy[N];
+int tot, rt;
+
+inline void pushdown(int x)
+{
+    if (lazy[x])
+    {
+        swap(son[x][0], son[x][1]);
+        lazy[son[x][0]] ^= 1;
+        lazy[son[x][1]] ^= 1;
+        lazy[x] = 0;
+    }
+}
+
+inline void update(int x)
+{
+    sz[x] = cnt[x] + sz[son[x][0]] + sz[son[x][1]];
+}
+
+int build(int l, int r, int fa)
+{
+    if (l > r)return 0;
+    int m = (l + r) >> 1;
+    int now = ++tot;
+    f[now] = fa;
+    cnt[now] = 1;
+    val[now] = m - 1;
+    son[now][0] = build(l, m - 1, now);
+    son[now][1] = build(m + 1, r, now);
+    update(now);
+    return now;
+}
+
+int kth(int x)
+{
+    int now = rt;
+    while (1)
+    {
+        pushdown(now);
+        if (sz[son[now][0]] >= x)
+            now = son[now][0];
+        else
+        {
+            x -= sz[son[now][0]] + 1;
+            if (!x)return now;
+            now = son[now][1];
+        }
+    }
+}
+
+inline int get(int x)
+{
+    return x == son[f[x]][1];
+}
+
+inline void connect(int x, int y, int d)
+{
+    if (x)son[x][d] = y;
+    if (y)f[y] = x;
+}
+
+inline void rotate(int x)
+{
+    int fa = f[x], ffa = f[fa], p = get(x), q = get(fa);
+    connect(fa, son[x][p ^ 1], p);
+    connect(x, fa, p ^ 1);
+    connect(ffa, x, q);
+    update(fa), update(x);//顺序不能变
+}
+
+void splay(int x, int ed)
+{
+    for (int fa; fa = f[x], fa != ed; rotate(x))
+        if (f[fa] != ed)rotate(get(fa) == get(x) ? fa : x);
+    if (!ed)
+        rt = x;
+}
+
+void reverse(int x, int y)
+{
+    x = kth(x), y = kth(y + 2);
+    splay(x, 0);
+    splay(y, x);
+    lazy[son[y][0]] ^= 1;
+}
+
+void print(int x)
+{
+    pushdown(x);
+    if (son[x][0])print(son[x][0]);
+    if (val[x] && val[x] <= n)printf("%d ", val[x]);
+    if (son[x][1])print(son[x][1]);
+}
+
+int main()
+{
+    int p, q, u, v, w, x, y, z, T;
+    cin >> n >> m;
+    rt = build(1, n + 2, 0);
+    while (m--)
+    {
+        int l, r;
+        scanf("%d%d", &l, &r);
+        reverse(l, r);
+    }
+    print(rt);
+    return 0;
+}

@@ -1,0 +1,106 @@
+<div align = "center">分治fwt</div>
+
+高维向低维作贡献，已知$f(n-1)=0$，求$f(0)$
+$$
+f(x)=\frac{1+\sum\limits_{y,(x\bigoplus y)>x}p(y)\times f(x\bigoplus y)}{1-S(x)}
+$$
+
+```c++
+const int N = 200005;
+int n, m, k;
+ll a[1 << 16], p[1 << 16], S[1 << 16];
+const ll mod = 1e9 + 7;
+
+ll fpow(ll x, ll r)
+{
+    ll ans = 1;
+    while (r)
+    {
+        if (r & 1)ans = ans * x % mod;
+        r >>= 1;
+        x = x * x % mod;
+    }
+    return ans;
+}
+
+void fwt(ll *f, int n)
+{
+    for (int o = 2, k = 1; o <= n; o <<= 1, k <<= 1)
+        for (int i = 0; i < n; i += o)
+            for (int j = 0; j < k; j++)
+            {
+                ll u = f[i + j], v = f[i + j + k];
+                f[i + j] = (u + v) % mod;
+                f[i + j + k] = (u - v + mod) % mod;
+            }
+}
+
+void ifwt(ll *f, int n)
+{
+    static const ll inv2 = fpow(2, mod - 2);
+    for (int o = 2, k = 1; o <= n; o <<= 1, k <<= 1)
+        for (int i = 0; i < n; i += o)
+            for (int j = 0; j < k; j++)
+            {
+                ll u = f[i + j], v = f[i + j + k];
+                f[i + j] = (u + v) * inv2 % mod;
+                f[i + j + k] = (u - v + mod) * inv2 % mod;
+            }
+}
+
+ll f[1 << 16], g[1 << 16], h[1 << 16];
+
+void solve(int l, int r)
+{
+    if (l == r)
+    {
+        ll sum = p[0];
+        for (int i = 0; 1 << i < n; i++)
+            if (l >> i & 1)
+                sum = (sum + S[i]) % mod;
+        f[l] = (1 + f[l]) * fpow(1 - sum + mod, mod - 2) % mod;
+        return;
+    }
+    int m = (l + r) >> 1;
+    solve(m + 1, r);
+    int len = r - l + 1;
+    for (int i = l; i <= m; i++)
+        g[i - l] = 0;
+    for (int i = m + 1; i <= r; i++)
+        g[i - l] = f[i];
+    for (int i = 0; i < len; i++)
+        h[i] = p[i];
+    fwt(g, len), fwt(h, len);
+    for (int i = 0; i < len; i++)
+        g[i] = g[i] * h[i] % mod;
+    ifwt(g, len);
+    for (int i = l; i <= m; i++)
+        f[i] = (f[i] + g[i - l]) % mod;
+    solve(l, m);
+}
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int T;
+    cin >> T;
+    while (T--)
+    {
+        memset(f, 0, sizeof(f));
+        memset(S, 0, sizeof(S));
+        cin >> n;
+        ll sum = 0;
+        for (int i = 0; i < n; i++)
+            cin >> a[i], sum = (sum + a[i]) % mod;
+        const ll invsum = fpow(sum, mod - 2);
+        for (int i = 0; i < n; i++)
+            p[i] = a[i] * invsum % mod;
+        for (int i = 1; i < n; i++)
+            S[__lg(i)] = (S[__lg(i)] + p[i]) % mod;
+        solve(0, n - 1);
+        cout << f[0] << '\n';
+    }
+    return 0;
+}
+```

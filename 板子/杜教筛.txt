@@ -1,0 +1,71 @@
+const int N = 2000005;
+int n, m, k;
+int vis[N], prime[N], mu[N], phi[N];
+int cnt;
+ll S_mu[N], S_phi[N];
+
+void Prime()
+{
+    mu[1] = phi[1] = 1;
+    for (int i = 2; i <= N - 5; i++)
+    {
+        if (!vis[i])prime[++cnt] = i, mu[i] = -1, phi[i] = i - 1;
+        for (int j = 1; j <= cnt && i * prime[j] <= N - 5; j++)
+        {
+            vis[i * prime[j]] = 1;
+            if (i % prime[j] == 0)
+            {
+                phi[i * prime[j]] = phi[i] * prime[j];
+                break;
+            }
+            mu[i * prime[j]] = -mu[i];
+            phi[i * prime[j]] = phi[i] * (prime[j] - 1);
+        }
+    }
+    for (int i = 1; i <= N - 5; i++)
+    {
+        S_mu[i] = S_mu[i - 1] + mu[i];
+        S_phi[i] = S_phi[i - 1] + phi[i];
+    }
+}
+
+unordered_map<ll, ll> ans_mu, ans_phi;
+
+ll get_mu(ll n)
+{
+    if (n <= N - 5)return S_mu[n];
+    if (ans_mu.count(n))return ans_mu[n];
+    ll ans = 0;
+    for (ll l = 2, r; l <= n; l = r + 1)//注意是2 ！！！
+    {
+        r = n / (n / l);
+        ans += (r - l + 1) * get_mu(n / l);
+    }
+    return ans_mu[n] = 1 - ans;
+}
+
+ll get_phi(ll n)
+{
+    if (n <= N - 5)return S_phi[n];
+    if (ans_phi.count(n))return ans_phi[n];
+    ll ans = 0;
+    for (ll l = 2, r; l <= n; l = r + 1)//注意是2 ！！！
+    {
+        r = n / (n / l);
+        ans += (r - l + 1) * get_phi(n / l);
+    }
+    return ans_phi[n] = n * (n + 1) / 2 - ans;
+}
+
+int main()
+{
+    int p, q, u, v, w, x, y, z, T;
+    Prime();
+    cin >> T;
+    while (T--)
+    {
+        scanf("%d", &n);
+        printf("%lld %lld\n", get_phi(n), get_mu(n));
+    }
+    return 0;
+}

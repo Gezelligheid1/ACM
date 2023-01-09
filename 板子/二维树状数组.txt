@@ -1,0 +1,20 @@
+int c[1010][1010];
+const int n = 1001;
+int lowbit(int x)
+{
+    return x & (-x);
+}
+void update(int x, int y, int k)//a[x][y]加上k
+{
+    for (int i = x; i <= n; i += lowbit(i))
+        for (int j = y; j <= n; j += lowbit(j))
+            c[i][j] += k;
+}
+int getsum(int x, int y)//求a[1][1]到a[x][y]的和
+{
+    int result = 0;
+    for (int i = x; i; i -= lowbit(i))
+        for (int j = y; j; j -= lowbit(j))
+            result += c[i][j];
+    return result;
+}

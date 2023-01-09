@@ -1,0 +1,47 @@
+struct frac
+{
+    ll x, y;
+
+    frac(ll xx = 0, ll yy = 1)
+    {
+        ll d = gcd(xx, yy);
+        x = xx / d, y = yy / d;
+    }
+
+    friend frac operator+(const frac &a, const frac &b)
+    {
+        frac ans;
+        ans.y = lcm(a.y, b.y);
+        ans.x = ans.y / a.y * a.x + ans.y / b.y * b.x;
+        ll d = gcd(ans.x, ans.y);
+        ans.x /= d, ans.y /= d;
+        return ans;
+    }
+
+    frac &operator+=(const frac &rhs)
+    {
+        *this = *this + rhs;
+        return *this;
+    }
+
+    friend bool operator>(const frac &a, const frac &b)
+    {
+        return a.x * b.y > a.y * b.x;
+    }
+
+    friend bool operator<(const frac &a, const frac &b)
+    {
+        return a.x * b.y < a.y * b.x;
+    }
+
+    friend bool operator<=(const frac &a, const frac &b)
+    {
+        return !(a > b);
+    }
+
+    friend ostream &operator<<(ostream &out, const frac &a)
+    {
+        out << a.x << '/' << a.y;
+        return out;
+    }
+};
